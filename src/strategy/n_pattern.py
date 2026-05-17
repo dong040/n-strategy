@@ -533,7 +533,7 @@ def find_n_signals(
 
             # 当前价必须接近费波位（涨停基因 8%，普通 3%）
             fib_dist = abs(last_close - fib_price) / fib_price
-            fib_dist_max = 0.08 if has_limit_up else 0.03
+            fib_dist_max = 0.12 if has_limit_up else 0.03  # 涨停基因允许更宽范围，让MA有机会竞争
             if fib_dist > fib_dist_max:
                 continue
 
@@ -557,39 +557,34 @@ def find_n_signals(
                 opens, highs, lows, closes, vols, best_p, tb, params,
             )
 
-            # === 入场价：fib 优先，MA 兜底 ===
-            # - fib 未被击穿：用 fib（费波位是核心支撑逻辑）
-            # - fib 已被击穿：用 MA10/MA9/下一级 fib 中最强支撑
+            # === 入场价：fib + MA 平等竞争，取最低者 ===
+            # 均线的参考价值大于 fib 计算值 — 市场真实成本 > 理论位置
             fib_broken = retrace_low < fib_price * 0.998
             next_level_map = {0.236: 0.382, 0.382: 0.5, 0.5: 0.618}
 
             def _in_range(price):
                 return abs(last_close - price) / price <= fib_dist_max
 
-            entry_price = None
-
-            if not fib_broken and _in_range(fib_price):
-                # fib 有效 → 优先用 fib
-                entry_price = round(fib_price, 2)
+            candidates = []
+            # fib（未被击穿才有效）
+            if not fib_broken:
+                candidates.append(round(fib_price, 2))
             else:
-                # fib 已破 → MA10 > MA9 > 下一级 fib 依次找
-                candidates = []
-                if ma10 is not None and ma10 < last_close:
-                    candidates.append(round(ma10, 2))
-                if ma9 is not None and ma9 < last_close:
-                    candidates.append(round(ma9, 2))
                 next_level = next_level_map.get(fib_level)
                 if next_level:
                     np_fib = first_high - (first_high - first_low) * next_level
                     if np_fib < last_close:
                         candidates.append(round(np_fib, 2))
-                for c in candidates:
-                    if _in_range(c):
-                        entry_price = c
-                        break
+            # MA 始终作为支撑候选（均线参考价值 > fib）
+            if ma10 is not None and ma10 < last_close:
+                candidates.append(round(ma10, 2))
+            if ma9 is not None and ma9 < last_close:
+                candidates.append(round(ma9, 2))
 
-            if entry_price is None:
+            valid = [c for c in candidates if _in_range(c)]
+            if not valid:
                 continue  # 无合适支撑位
+            entry_price = round(min(valid), 2)  # 取最低 → 最好入场价
 
             fib_dist = abs(last_close - entry_price) / entry_price
 
