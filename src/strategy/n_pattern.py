@@ -658,29 +658,35 @@ def score_fundamental(code: str, close: float, client) -> dict:
     """获取并评分单只股票的基本面
 
     Returns:
-        dict with pe, pb, net_profit_yi, score, is_loss_making
-        如果 is_loss_making=True，则基本面无价值，应排除。
+        dict with pe, pb, net_profit_yi, mcap_yi, score, is_loss_making, is_garbage_profitable
+        is_loss_making: 亏损股，技术面强仍可入选
+        is_garbage_profitable: 盈利但微利+高PE/小市值，明显垃圾，应排除
     """
-    result = {'pe': 0, 'pb': 0, 'net_profit_yi': 0, 'score': 0, 'is_loss_making': False}
+    result = {
+        'pe': 0, 'pb': 0, 'net_profit_yi': 0, 'mcap_yi': 0,
+        'score': 0, 'is_loss_making': False, 'is_garbage_profitable': False,
+    }
 
     try:
         fin = client.finance(symbol=code)
         if fin is None or len(fin) == 0:
             return result
 
-        jlr = float(fin['jinglirun'].values[0])  # 净利润
-        zgb = float(fin['zongguben'].values[0])  # 总股本
-        mgjzc = float(fin['meigujingzichan'].values[0])  # 每股净资产
+        jlr = float(fin['jinglirun'].values[0])
+        zgb = float(fin['zongguben'].values[0])
+        mgjzc = float(fin['meigujingzichan'].values[0])
 
-        mcap = close * zgb  # 总市值
+        mcap = close * zgb
+        mcap_yi = round(mcap / 1e8, 1)
+        net_profit_yi = round(jlr / 1e8, 1)
+        result['net_profit_yi'] = net_profit_yi
+        result['mcap_yi'] = mcap_yi
 
-        # 亏损股 → 不排除，但给负分
+        # 亏损股 — 不排除，给负分（可能是周期反转/题材弹性股）
         if jlr <= 0:
-            result['pe'] = 0
             result['pb'] = round(close / mgjzc, 1) if mgjzc > 0 else 0
-            result['net_profit_yi'] = round(jlr / 1e8, 1)
             result['is_loss_making'] = True
-            result['score'] = -15  # 亏损扣分，技术面强仍可入选
+            result['score'] = -10
             return result
 
         pe = mcap / jlr
@@ -688,25 +694,41 @@ def score_fundamental(code: str, close: float, client) -> dict:
 
         result['pe'] = round(pe, 1)
         result['pb'] = round(pb, 1)
-        result['net_profit_yi'] = round(jlr / 1e8, 1)
+
+        # === 盈利垃圾股检测 ===
+        # 微利（<500万）且高PE（>150）且小市值（<30亿）→ 明显垃圾
+        if net_profit_yi < 0.05 and pe > 150 and mcap_yi < 30:
+            result['is_garbage_profitable'] = True
+            result['score'] = -30
+            return result
+        # 微利+极高PE → 垃圾
+        if net_profit_yi < 0.1 and pe > 200:
+            result['is_garbage_profitable'] = True
+            result['score'] = -30
+            return result
+        # 微利+极小市值（<15亿）→ 壳资源/垃圾
+        if net_profit_yi < 0.05 and mcap_yi < 15:
+            result['is_garbage_profitable'] = True
+            result['score'] = -30
+            return result
 
         # 基本面评分 (0-20)
         score = 0
         if pe <= 30:
-            score += 12  # 低估值
+            score += 12
         elif pe <= 60:
-            score += 8   # 合理
+            score += 8
         elif pe <= 100:
-            score += 3   # 偏高
+            score += 3
         else:
-            score -= 5   # 高估
+            score -= 5
 
         if pb <= 3:
-            score += 8   # 低PB
+            score += 8
         elif pb <= 6:
-            score += 4   # 合理
+            score += 4
         elif pb > 15:
-            score -= 5   # 高PB
+            score -= 5
 
         result['score'] = score
         return result

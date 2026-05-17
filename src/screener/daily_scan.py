@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from ..strategy.n_pattern import NPatternParams, NSignal, scan_stock
+from ..strategy.n_pattern import NPatternParams, NSignal, scan_stock, score_fundamental
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ def _get_main_board_stocks():
     import akshare as ak
     stock_info = ak.stock_info_a_code_name()
     df = stock_info[['code', 'name']].copy()
-    main = df[df['code'].str.match(r'^(60|000|001)\d{4}$')].copy()
+    main = df[df['code'].str.match(r'^(60\d{4}|00[0-4]\d{3})$')].copy()
     main = main[~main['name'].str.contains('ST', na=False)]
     return main
 
@@ -102,6 +102,20 @@ def run_daily_scan(
                 continue
 
             signals = scan_stock(code, names.get(code, ''), df, params)
+
+            # 基本面过滤 — 亏损可留，盈利垃圾必除
+            if signals:
+                last_close = df['close'].values[-1]
+                fin = score_fundamental(code, last_close, client)
+                sig = signals[0]
+                sig.pe = fin['pe']
+                sig.pb = fin['pb']
+                sig.net_profit_yi = fin['net_profit_yi']
+                sig.fundamental_score = fin['score']
+                if fin['is_garbage_profitable']:
+                    continue  # 盈利但微利+高PE/小市值 → 垃圾股排除
+                sig.strength += fin['score']
+
             all_signals.extend(signals)
         except Exception:
             errors += 1
