@@ -83,6 +83,7 @@ class NSignal:
     ma_consistent: bool = False
     bullish_days: int = 0
     has_limit_up: bool = False
+    limit_up_count: int = 0
     ma_fib_ok: bool = False
     ma10_broken_intraday: bool = False
     nearest_ma: tuple = None
@@ -229,16 +230,17 @@ def _check_ma_bullish(closes, min_days=3, lookback=5):
     return ma_bullish_now, ma9 > ma10, bullish_days, ma_consistent, ma9, ma10, ma20
 
 
-def _check_limit_up(closes, lookback=30):
-    """检查近N日是否有涨停（>=9.5%近似涨停）"""
+def _check_limit_up(closes, lookback=60):
+    """检查近N日涨停次数（>=9.5%近似涨停），返回次数"""
     n = len(closes)
     start = max(0, n - lookback)
+    count = 0
     for i in range(start, n):
         if i > 0 and closes[i - 1] > 0:
             chg = (closes[i] - closes[i - 1]) / closes[i - 1]
             if chg >= 0.095:
-                return True
-    return False
+                count += 1
+    return count
 
 
 def _calc_strength(signal_data: dict) -> int:
@@ -279,7 +281,11 @@ def _calc_strength(signal_data: dict) -> int:
     if signal_data.get('fib_level', 1) <= 0.382 and signal_data.get('first_rise_pct', 0) > 0.30:
         strength += 5
     if signal_data.get('has_limit_up'):
-        strength += 10
+        cnt = signal_data.get('limit_up_count', 0)
+        if cnt >= 3:
+            strength += 15  # 多次涨停，股性极活
+        else:
+            strength += 10  # 2次涨停
 
     # 罚分：跌破 MA10 再拉回 → 支撑已被测试
     if signal_data.get('ma10_broken_intraday'):
@@ -464,7 +470,8 @@ def find_n_signals(
     n = len(closes)
     peaks, troughs = find_extrema(highs, lows)
 
-    has_limit_up = _check_limit_up(closes, 30)
+    limit_up_count = _check_limit_up(closes)
+    has_limit_up = limit_up_count >= 2  # 至少2次涨停才算有涨停基因
     ma_bullish, ma9_gt_ma10, bullish_days, ma_consistent, ma9, ma10, ma20 = _check_ma_bullish(closes)
 
     last_close = closes[-1]
@@ -626,6 +633,7 @@ def find_n_signals(
                 'ma_consistent': ma_consistent,
                 'bullish_days': bullish_days,
                 'has_limit_up': has_limit_up,
+                'limit_up_count': limit_up_count,
                 'ma_fib_ok': ma_fib_ok,
                 'ma10_broken_intraday': ma10_broken_intraday,
                 'nearest_ma': nearest_ma,
@@ -778,6 +786,7 @@ def scan_stock(
             ma_consistent=s['ma_consistent'],
             bullish_days=s['bullish_days'],
             has_limit_up=s['has_limit_up'],
+            limit_up_count=s.get('limit_up_count', 0),
             ma_fib_ok=s['ma_fib_ok'],
             ma10_broken_intraday=s.get('ma10_broken_intraday', False),
             nearest_ma=s.get('nearest_ma'),
