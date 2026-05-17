@@ -46,9 +46,18 @@ def format_signal_line(s: NSignal, idx: int) -> str:
 
     lines = [
         f"{idx}. {emoji} **{s.name}**({s.code}) 强**{s.strength}**{support_note}",
-        f"   买入 **{s.entry_price}** | 止损 {s.stop_loss} | 目标 {s.target_price}",
+        f"   买入 **{s.entry_price}** | 止损 {s.stop_loss} | 目标 {s.target_price} | 盈亏比 {s.rr_ratio}",
         f"   费波**{s.fib_level}**({s.fib_price}) | MA9={s.ma9} MA10={s.ma10} | 首波+{s.first_rise_pct}% 回调{s.retrace_pct}%({s.retrace_days}天)",
     ]
+    # 压力位/卖出位
+    if s.broken_levels:
+        brk_strs = [f"{label}{price}(已突破)" for label, price, dist in s.broken_levels[:2]]
+        lines.append(f"   已突破: {' | '.join(brk_strs)}")
+    if s.resistance_levels:
+        res_strs = [f"{label} {price}(+{dist}%)" for label, price, dist in s.resistance_levels[:3]]
+        lines.append(f"   压力位: {' | '.join(res_strs)}")
+    if s.fib_extension_1272 > s.entry_price:
+        lines.append(f"   Fib扩展: 127.2%={s.fib_extension_1272} 161.8%={s.fib_extension_1618}")
     if flag_str:
         lines.append(f"   {flag_str}")
 
@@ -169,8 +178,14 @@ def push_via_webhook(results: list, top_n: int = 15) -> bool:
         flag_str = " ".join(flags)
 
         lines.append(f"{i+1}. **{r.name}**({r.code}) 强**{r.strength}**{support_note}")
-        lines.append(f"   买入 **{r.entry_price}** | 止损 {r.stop_loss} | 目标 {r.target_price}")
+        lines.append(f"   买入 **{r.entry_price}** | 止损 {r.stop_loss} | 目标 {r.target_price} | 盈亏比 {r.rr_ratio}")
         lines.append(f"   费波**{r.fib_level}**({r.fib_price}) | MA9={r.ma9} MA10={r.ma10} | 首波+{r.first_rise_pct}% 回调{r.retrace_pct}%({r.retrace_days}天)")
+        if r.broken_levels:
+            brk_strs = [f"{label}{price}(已突破)" for label, price, dist in r.broken_levels[:2]]
+            lines.append(f"   已突破: {' | '.join(brk_strs)}")
+        if r.resistance_levels:
+            res_strs = [f"{label}{price}(+{dist}%)" for label, price, dist in r.resistance_levels[:3]]
+            lines.append(f"   压力位: {' | '.join(res_strs)}")
         if flag_str:
             lines.append(f"   {flag_str}")
         lines.append("")

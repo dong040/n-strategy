@@ -68,6 +68,7 @@ class NSignal:
     strength: int = 0
     fib_level: float = 0
     fib_price: float = 0
+    fib_dist: float = 0
     first_rise_pct: float = 0
     retrace_pct: float = 0
     retrace_days: int = 0
@@ -92,6 +93,14 @@ class NSignal:
     pb: float = 0
     net_profit_yi: float = 0
     fundamental_score: int = 0
+    # 压力位/卖出
+    resistance_levels: list = field(default_factory=list)  # [(label, price, distance_pct), ...] 上方压力
+    broken_levels: list = field(default_factory=list)  # [(label, price, distance_pct), ...] 刚突破的
+    nearest_resistance: tuple = None  # (label, price, distance_pct)
+    entry_to_resistance_pct: float = 0
+    rr_ratio: float = 0
+    fib_extension_1272: float = 0
+    fib_extension_1618: float = 0
     details: dict = field(default_factory=dict)
 
 
@@ -239,11 +248,15 @@ def _calc_strength(signal_data: dict) -> int:
         strength += 20
     elif signal_data.get('has_vol_shrink') or signal_data.get('has_shadow'):
         strength += 8
-    # 多头排列：需要持续3日以上才给满分
-    if signal_data.get('ma_consistent'):
+    # 多头排列：持续3日+满分，2日半奖，1日无加分，0日重罚
+    bullish_days = signal_data.get('bullish_days', 0)
+    if bullish_days >= 3:
         strength += 15  # 持续多头排列 = 强趋势
-    elif signal_data.get('ma9_gt_ma10'):
-        strength += 5   # 仅当日排列 = 弱趋势
+    elif bullish_days >= 2:
+        strength += 5   # 刚形成多头排列
+    elif bullish_days == 0:
+        strength -= 15  # MA 未形成多头排列
+    # bullish_days == 1: 不加不扣
     if signal_data.get('ma_bullish'):
         strength += 5
     if signal_data.get('has_vol_shrink'):
@@ -252,6 +265,17 @@ def _calc_strength(signal_data: dict) -> int:
         strength += 8
     if signal_data.get('ma_fib_ok'):
         strength += 10
+
+    # 费波偏离度：贴近(0.5-2%)最优 — 回调途中逼近支撑，动手窗口
+    # 到位(<0.5%)次之 — 已踩在支撑上，可能直接弹走
+    # 太远(>5%)扣分 — 还没跌到位
+    fib_dist = signal_data.get('fib_dist', 0)
+    if 0.005 <= fib_dist <= 0.02:
+        strength += 10  # 贴近支撑，回调途中最佳买点
+    elif fib_dist < 0.005:
+        strength += 5   # 已到位，可能已错过最佳窗口
+    elif fib_dist > 0.05:
+        strength -= 10  # 偏离太远，还需等
     if signal_data.get('fib_level', 1) <= 0.382 and signal_data.get('first_rise_pct', 0) > 0.30:
         strength += 5
     if signal_data.get('has_limit_up'):
@@ -261,7 +285,165 @@ def _calc_strength(signal_data: dict) -> int:
     if signal_data.get('ma10_broken_intraday'):
         strength -= 15
 
+    # 压力位罚分：区分前高压力 vs 纯整数关口
+    entry_to_res = signal_data.get('entry_to_resistance_pct', 100)
+    nearest_res = signal_data.get('nearest_resistance')
+    is_swing_high = nearest_res and '前高' in str(nearest_res[0]) if nearest_res else False
+
+    if entry_to_res < 2:
+        strength -= 25 if is_swing_high else 15  # 前高重压 → 重罚
+    elif entry_to_res < 5:
+        strength -= 10 if is_swing_high else 5   # 整数关口 → 轻罚
+    elif entry_to_res < 8 and is_swing_high:
+        strength -= 5  # 接近前高，轻扣
+
+    # 盈亏比奖励/罚分
+    rr = signal_data.get('rr_ratio', 0)
+    if rr >= 3:
+        strength += 10
+    elif rr >= 2:
+        strength += 5
+    elif rr < 1:
+        strength -= 10  # 盈亏比 < 1:1 不划算
+
     return max(0, strength)
+
+
+def _get_round_numbers(price: float) -> list:
+    """生成当前价上方的整数关口"""
+    levels = []
+    if price <= 0:
+        return levels
+    if price < 10:
+        step = 1
+    elif price < 50:
+        step = 5
+    elif price < 100:
+        step = 10
+    elif price < 500:
+        step = 50
+    else:
+        step = 100
+
+    base = int(price // step) * step
+    for i in range(1, 6):
+        level = base + step * i
+        if level > price:
+            levels.append(level)
+    return levels
+
+
+def _cluster_levels(raw_levels: list, current_price: float, merge_pct: float = 0.015):
+    """合并相近压力位（间距 < 1.5%），合并后保留最高价并标注来源
+
+    返回 (active_levels, broken_levels):
+      - active: 价格 > current_price 的压力位（上方）
+      - broken: 价格在 current_price ±5% 范围内，包括刚被突破的（下方）
+    """
+    if not raw_levels:
+        return [], []
+    raw_levels.sort(key=lambda x: x[1])
+    clustered = []
+    cur_label, cur_price = raw_levels[0]
+    for label, price in raw_levels[1:]:
+        if (price - cur_price) / cur_price < merge_pct:
+            cur_label = cur_label + '+' + label if label not in cur_label else cur_label
+            cur_price = max(cur_price, price)
+        else:
+            dist = round((cur_price - current_price) / current_price * 100, 1)
+            clustered.append((cur_label, round(cur_price, 2), dist))
+            cur_label, cur_price = label, price
+    dist = round((cur_price - current_price) / current_price * 100, 1)
+    clustered.append((cur_label, round(cur_price, 2), dist))
+
+    # 分离：上方压力位 vs 已被突破但仍在10%内的关键位
+    active = [(l, p, d) for l, p, d in clustered if d > 0]
+    broken = [(l, p, d) for l, p, d in clustered if -10 <= d <= 0]
+    active.sort(key=lambda x: x[2])
+    broken.sort(key=lambda x: x[2], reverse=True)  # 最近的突破位在前
+    return active[:5], broken[:3]
+
+
+def _find_resistance_levels(highs, peaks, current_price, first_high, first_low, retrace_low=None):
+    """找到当前价附近的压力位（含刚被突破的）
+
+    Returns:
+        (resistance_levels, broken_levels)
+        - resistance_levels: 上方压力位, sorted by distance asc
+        - broken_levels: 刚被突破的(-5%内), sorted by proximity desc
+    """
+    raw = []
+
+    # 1. 历史前高（只要在 ±5% 范围内的都收集）
+    for p_idx in peaks:
+        h = highs[p_idx]
+        if h > current_price * 0.90:  # 包括刚被突破的 (-5%内)
+            raw.append(('前高', float(h)))
+
+    # 2. 整数关口（价格上方 + 紧邻下方）
+    # 也生成一个低于当前价的最近关口
+    all_rounds = _get_round_numbers(current_price)
+    # 添加紧邻下方的关口
+    if current_price < 10:
+        step = 1
+    elif current_price < 50:
+        step = 5
+    elif current_price < 100:
+        step = 10
+    elif current_price < 500:
+        step = 50
+    else:
+        step = 100
+    base = int(current_price // step) * step
+    if base < current_price and base > current_price * 0.90:
+        raw.append(('整数关口', float(base)))
+    for rl in all_rounds:
+        raw.append(('整数关口', float(rl)))
+
+    # 3. 前高突破延伸位
+    ext_base_low = retrace_low if retrace_low is not None else first_low
+    pullback_range = first_high - ext_base_low
+    if pullback_range > 0:
+        for ratio, label in [(0.236, '延伸23.6%'), (0.382, '延伸38.2%')]:
+            level = first_high + pullback_range * ratio
+            if level > current_price * 0.90:
+                raw.append((label, round(level, 2)))
+
+        # 3b. 前高供应区上限：前高 - 回调段 × 10%
+        # 大胜达案例: 前高20.80 - (20.80-17.83)×0.10 = 20.50
+        if retrace_low is not None:
+            supply_ceiling = first_high - pullback_range * 0.10
+            if supply_ceiling > current_price * 0.90:
+                raw.append(('供应区上限', round(supply_ceiling, 2)))
+
+    # 4. Fib 扩展位 (基于第一波幅度)
+    move = first_high - first_low
+    if move > 0:
+        for ext_pct, label in [(1.272, 'Fib127.2%'), (1.618, 'Fib161.8%')]:
+            level = first_low + move * ext_pct
+            if level > current_price * 0.90:
+                raw.append((label, round(level, 2)))
+
+    # 5. 大N = 小N × 0.90（小N没撑住→跌一个板到下一个支撑）
+    # 航天电器案例: 大N 70.4 = 小N(前高) 78.22 × 0.90
+    # A股主板10%涨跌停逻辑：支撑破后下一个自然支撑位
+    small_n_candidates = [first_high]  # 前高是小N的第一候选
+    if retrace_low is not None:
+        small_n_candidates.append(first_high - (first_high - retrace_low) * 0.10)  # 供应区上限
+    # 也从相邻前高延伸（铭普光磁案例：前高+(前高-上一前高)×0.236）
+    peaks_sorted = sorted([p for p in peaks if highs[p] < first_high], key=lambda p: highs[p], reverse=True)
+    if peaks_sorted:
+        prev_peak = highs[peaks_sorted[0]]
+        if prev_peak < first_high:
+            ext_from_prev = first_high + (first_high - prev_peak) * 0.236
+            small_n_candidates.append(ext_from_prev)
+
+    for sn in small_n_candidates:
+        bn = sn * 0.90
+        if bn > current_price * 0.85:  # 宽松阈值，覆盖下方支撑
+            raw.append(('大N', round(bn, 2)))
+
+    return _cluster_levels(raw, current_price)
 
 
 def find_n_signals(
@@ -291,9 +473,7 @@ def find_n_signals(
     if ma10 is not None and last_close < ma10:
         return []
 
-    # === 硬过滤2：多头排列不持续 → 至少3/5日 MA9>MA10>MA20 ===
-    if not ma_consistent:
-        return []
+    # === MA 多头排列不持续 → 不硬过滤，改在强度中罚分 ===
 
     # === 检测近期是否跌破过 MA10（日内跌破也算） ===
     recent_lows = lows[-3:] if n >= 3 else lows
@@ -305,6 +485,11 @@ def find_n_signals(
         for tb in troughs[ti + 1:]:
             if tb < n - 3:
                 continue  # 第二低谷必须在近3日
+
+            # N结构总时长限制：避免匹配过于久远的历史形态
+            total_n_days = tb - ta
+            if total_n_days > 90:
+                continue
 
             peaks_between = [p for p in peaks if ta < p < tb]
             if not peaks_between:
@@ -334,9 +519,9 @@ def find_n_signals(
             fib_level = _fib_to_level(retrace)
             fib_price = first_high - (first_high - first_low) * fib_level
 
-            # 当前价必须接近费波位（有涨停基因放宽到15%，普通5%）
+            # 当前价必须接近费波位（涨停基因 8%，普通 3%）
             fib_dist = abs(last_close - fib_price) / fib_price
-            fib_dist_max = 0.15 if has_limit_up else 0.05
+            fib_dist_max = 0.08 if has_limit_up else 0.03
             if fib_dist > fib_dist_max:
                 continue
 
@@ -360,11 +545,64 @@ def find_n_signals(
                 opens, highs, lows, closes, vols, best_p, tb, params,
             )
 
-            entry_price = round(last_close, 2)
-            stop_loss = round(fib_price * 0.98, 2)
+            # === 入场价：fib 优先，MA 兜底 ===
+            # - fib 未被击穿：用 fib（费波位是核心支撑逻辑）
+            # - fib 已被击穿：用 MA10/MA9/下一级 fib 中最强支撑
+            fib_broken = retrace_low < fib_price * 0.998
+            next_level_map = {0.236: 0.382, 0.382: 0.5, 0.5: 0.618}
+
+            def _in_range(price):
+                return abs(last_close - price) / price <= fib_dist_max
+
+            entry_price = None
+
+            if not fib_broken and _in_range(fib_price):
+                # fib 有效 → 优先用 fib
+                entry_price = round(fib_price, 2)
+            else:
+                # fib 已破 → MA10 > MA9 > 下一级 fib 依次找
+                candidates = []
+                if ma10 is not None and ma10 < last_close:
+                    candidates.append(round(ma10, 2))
+                if ma9 is not None and ma9 < last_close:
+                    candidates.append(round(ma9, 2))
+                next_level = next_level_map.get(fib_level)
+                if next_level:
+                    np_fib = first_high - (first_high - first_low) * next_level
+                    if np_fib < last_close:
+                        candidates.append(round(np_fib, 2))
+                for c in candidates:
+                    if _in_range(c):
+                        entry_price = c
+                        break
+
+            if entry_price is None:
+                continue  # 无合适支撑位
+
+            fib_dist = abs(last_close - entry_price) / entry_price
+
+            # 止损 = 入场价（跌破支撑位即离场，逻辑失效）
+            stop_loss = round(entry_price * 0.995, 2)
 
             # 等幅测距目标
             target = round(first_high + (first_high - first_low), 2)
+
+            # === 压力位/卖出位检测 (以入场价为基准) ===
+            resistance_levels, broken_levels = _find_resistance_levels(
+                highs, peaks, entry_price, first_high, first_low, retrace_low,
+            )
+            nearest_resistance = resistance_levels[0] if resistance_levels else None
+            entry_to_resistance_pct = nearest_resistance[2] if nearest_resistance else 0
+
+            # Fib 扩展位 (卖出参考)
+            move = first_high - first_low
+            fib_ext_1272 = round(first_low + move * 1.272, 2) if move > 0 else 0
+            fib_ext_1618 = round(first_low + move * 1.618, 2) if move > 0 else 0
+
+            # 盈亏比: (目标 - 入场) / (入场 - 止损)
+            risk = entry_price - stop_loss
+            reward = target - entry_price
+            rr_ratio = round(reward / risk, 1) if risk > 0 else 0
 
             sig_data = {
                 'entry_price': entry_price,
@@ -372,6 +610,7 @@ def find_n_signals(
                 'target_price': target,
                 'fib_level': fib_level,
                 'fib_price': round(fib_price, 2),
+                'fib_dist': round(fib_dist, 3),
                 'first_rise_pct': round(first_rise * 100, 1),
                 'retrace_pct': round(retrace * 100, 1),
                 'retrace_days': retrace_days,
@@ -390,9 +629,27 @@ def find_n_signals(
                 'nearest_ma': nearest_ma,
                 'ma9': round(ma9, 2) if ma9 is not None else None,
                 'ma10': round(ma10, 2) if ma10 is not None else None,
+                # 压力位/卖出
+                'resistance_levels': resistance_levels,
+                'broken_levels': broken_levels,
+                'nearest_resistance': nearest_resistance,
+                'entry_to_resistance_pct': entry_to_resistance_pct,
+                'rr_ratio': rr_ratio,
+                'fib_extension_1272': fib_ext_1272,
+                'fib_extension_1618': fib_ext_1618,
             }
             sig_data['strength'] = _calc_strength(sig_data)
+            sig_data['_tb'] = tb  # 用于去重
             signals.append(sig_data)
+
+    # 去重：每个第二低谷保留最强信号
+    if signals:
+        best_per_tb = {}
+        for s in signals:
+            tb = s.pop('_tb')
+            if tb not in best_per_tb or s['strength'] > best_per_tb[tb]['strength']:
+                best_per_tb[tb] = s
+        signals = list(best_per_tb.values())
 
     return signals
 
@@ -483,6 +740,7 @@ def scan_stock(
             strength=s['strength'],
             fib_level=s['fib_level'],
             fib_price=s['fib_price'],
+            fib_dist=s.get('fib_dist', 0),
             first_rise_pct=s['first_rise_pct'],
             retrace_pct=s['retrace_pct'],
             retrace_days=s['retrace_days'],
@@ -501,6 +759,13 @@ def scan_stock(
             nearest_ma=s.get('nearest_ma'),
             ma9=s.get('ma9') or 0,
             ma10=s.get('ma10') or 0,
+            resistance_levels=s.get('resistance_levels', []),
+            broken_levels=s.get('broken_levels', []),
+            nearest_resistance=s.get('nearest_resistance'),
+            entry_to_resistance_pct=s.get('entry_to_resistance_pct', 0),
+            rr_ratio=s.get('rr_ratio', 0),
+            fib_extension_1272=s.get('fib_extension_1272', 0),
+            fib_extension_1618=s.get('fib_extension_1618', 0),
         )
         result.append(sig)
 

@@ -168,7 +168,7 @@ def cmd_backtest():
         if df.empty:
             logger.warning(f"  {code} 无数据")
             continue
-        result = backtest_single_stock(code, df, params, backtest_cfg)
+        result = backtest_single_stock(code, code, df, params, backtest_cfg)
         print(
             f"  {code}: {result.total_trades}笔 | "
             f"胜率{result.win_rate}% | 收益{result.total_return}% | "
@@ -252,8 +252,16 @@ def cmd_scan():
         warn = " ⚠️MA10日内跌破" if s.ma10_broken_intraday else ""
 
         print(f"{i:2d}. {s.name}({s.code}) 强{s.strength}{warn}")
-        print(f"    买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price}")
+        print(f"    买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} 盈亏比{s.rr_ratio}")
         print(f"    费波{s.fib_level}({s.fib_price}) MA9={s.ma9} MA10={s.ma10} | 首波+{s.first_rise_pct}% 回调{s.retrace_pct}%({s.retrace_days}天)")
+        if s.broken_levels:
+            brk_strs = [f"{label}{price}(已突破)" for label, price, dist in s.broken_levels[:2]]
+            print(f"    已突破: {' | '.join(brk_strs)}")
+        if s.resistance_levels:
+            res_strs = [f"{label}{price}(+{dist}%)" for label, price, dist in s.resistance_levels[:3]]
+            print(f"    压力位: {' | '.join(res_strs)}")
+        if s.fib_extension_1272 > s.entry_price:
+            print(f"    Fib扩展 127.2%={s.fib_extension_1272} 161.8%={s.fib_extension_1618}")
         if flag_str:
             print(f"    {flag_str}")
 
