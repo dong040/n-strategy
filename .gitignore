@@ -1,0 +1,29 @@
+# 敏感配置
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 本地数据
+data/*.db
+data/*.pkl
+data/*.csv
+data/bt_cache/
+data/screenshots/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# 临时文件
+tmp/
+*.tmp

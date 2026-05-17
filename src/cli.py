@@ -1,0 +1,342 @@
+"""CLI 入口 — N字战法系统命令行工具
+
+Usage:
+    python -m src.cli import <文件路径>   导入飞书导出的聊天记录
+    python -m src.cli extract             提取战法规则
+    python -m src.cli backtest            回测当前参数
+    python -m src.cli optimize            优化参数
+    python -m src.cli scan                扫描今日标的
+    python -m src.cli push                推送到飞书（需先 scan）
+    python -m src.cli daily               一键 scan + push
+    python -m src.cli test-webhook        测试飞书 webhook 连接
+"""
+
+import logging
+import pickle
+import sys
+import re
+from pathlib import Path
+from datetime import datetime
+
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(_PROJECT_ROOT))
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+
+# ====== 消息导入 ======
+
+def _parse_feishu_export(path: str) -> list[dict]:
+    """解析飞书桌面端导出的 txt 聊天记录"""
+    content = Path(path).read_text(encoding="utf-8")
+    messages = []
+
+    lines = content.split("\n")
+    current_sender = ""
+    current_time = ""
+    current_msg = []
+
+    for line in lines:
+        time_match = re.search(r'(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2})', line)
+        if time_match:
+            if current_msg and current_time:
+                text = "\n".join(current_msg).strip()
+                if text:
+                    messages.append({
+                        "sender": current_sender,
+                        "content": text,
+                        "msg_type": "text",
+                        "created_at": current_time,
+                    })
+            current_time = time_match.group(1)
+            prefix = line[:time_match.start()].strip()
+            current_sender = prefix.lstrip("[").rstrip("]").strip()
+            current_msg = [line[time_match.end():].strip()] if line[time_match.end():].strip() else []
+        else:
+            if current_sender:
+                current_msg.append(line.strip())
+
+    if current_msg and current_time:
+        text = "\n".join(current_msg).strip()
+        if text:
+            messages.append({
+                "sender": current_sender,
+                "content": text,
+                "msg_type": "text",
+                "created_at": current_time,
+            })
+
+    return messages
+
+
+def cmd_import():
+    if len(sys.argv) < 3:
+        print("用法: python -m src.cli import <文件路径>")
+        sys.exit(1)
+
+    filepath = sys.argv[2]
+    if not Path(filepath).exists():
+        print(f"文件不存在: {filepath}")
+        sys.exit(1)
+
+    print(f"解析文件: {filepath}")
+    messages = _parse_feishu_export(filepath)
+
+    if not messages:
+        print("未识别到消息")
+        sys.exit(1)
+
+    from src.feishu.message_store import MessageStore
+
+    store = MessageStore()
+    inserted = 0
+    skipped = 0
+    for i, msg in enumerate(messages):
+        fake_id = f"import_{Path(filepath).stem}_{i}"
+        if store.insert(
+            msg_id=fake_id,
+            sender=msg["sender"],
+            content=msg["content"],
+            msg_type=msg["msg_type"],
+            created_at=msg["created_at"],
+        ):
+            inserted += 1
+        else:
+            skipped += 1
+
+    print(f"导入完成: {inserted} 条新增, {skipped} 条重复")
+
+
+# ====== 规则提取 ======
+
+def cmd_extract():
+    from src.feishu.message_store import MessageStore
+    from src.strategy.extractor import extract_rules, extract_stock_cases, summarize_rules
+
+    store = MessageStore()
+    messages = store.get_all(limit=500)
+    if not messages:
+        logger.warning("没有消息数据，请先运行 import")
+        return
+
+    senders = store.get_senders()
+    print(f"\n消息来源统计（共 {len(messages)} 条）:")
+    for s in senders[:10]:
+        print(f"   {s['sender'][:20]:20s} | {s['cnt']} 条")
+
+    print(f"\n开始提取战法规则...")
+    rules = extract_rules(messages)
+    summary = summarize_rules(rules)
+    cases = extract_stock_cases(messages)
+
+    print("\n" + "=" * 60)
+    print("规则提取结果")
+    print("=" * 60)
+    for cat, info in summary.items():
+        if info["count"] == 0:
+            continue
+        print(f"\n[{cat}] 共 {info['count']} 条规则")
+        print(f"  热门关键词: {info['top_keywords'][:5]}")
+
+    print(f"\n提取到 {len(cases)} 个实战案例")
+    for c in cases[:10]:
+        print(f"  {c.code} {c.date} {'✅' if c.direction == 'long' else '📉'} {c.raw_text[:80]}")
+
+
+# ====== 回测 ======
+
+def cmd_backtest():
+    import yaml
+    from src.strategy.n_pattern import NPatternParams
+    from src.strategy.backtest import BacktestConfig, backtest_single_stock
+    from src.screener.data_fetcher import get_daily_klines
+
+    with open(_PROJECT_ROOT / "config.yaml") as f:
+        cfg = yaml.safe_load(f)
+
+    params = NPatternParams(**cfg.get("n_pattern", {}))
+    backtest_cfg = BacktestConfig(**cfg.get("backtest", {}))
+
+    test_codes = ["600379", "000062", "002475", "000858"]
+    for code in test_codes:
+        logger.info(f"回测 {code}...")
+        df = get_daily_klines(code, days=500)
+        if df.empty:
+            logger.warning(f"  {code} 无数据")
+            continue
+        result = backtest_single_stock(code, df, params, backtest_cfg)
+        print(
+            f"  {code}: {result.total_trades}笔 | "
+            f"胜率{result.win_rate}% | 收益{result.total_return}% | "
+            f"夏普{result.sharpe_ratio} | 回撤{result.max_drawdown}%"
+        )
+
+
+# ====== 参数优化 ======
+
+def cmd_optimize():
+    import yaml
+    from src.strategy.n_pattern import NPatternParams
+    from src.strategy.backtest import BacktestConfig
+    from src.strategy.optimizer import optimize, OptimizerConfig
+    from src.screener.data_fetcher import get_daily_klines
+
+    with open(_PROJECT_ROOT / "config.yaml") as f:
+        cfg = yaml.safe_load(f)
+
+    opt_cfg = OptimizerConfig(**cfg.get("optimizer", {}))
+    backtest_cfg = BacktestConfig(**cfg.get("backtest", {}))
+
+    train_codes = [
+        "600379", "000062", "002475", "000858", "600519",
+        "300308", "002463", "688111", "300476", "603259",
+    ]
+    stocks_data = {}
+    logger.info("加载训练数据...")
+    for code in train_codes:
+        df = get_daily_klines(code, days=500)
+        if not df.empty and len(df) >= 100:
+            stocks_data[code] = df
+            logger.info(f"  {code}: {len(df)} 根 K线")
+
+    logger.info(f"开始{opt_cfg.method}优化 ({len(stocks_data)} 只股票)...")
+    best_params, best_score, all_results = optimize(
+        stocks_data, method=opt_cfg.method, config=backtest_cfg, opt_config=opt_cfg,
+    )
+
+    print("\n" + "=" * 60)
+    print("优化完成")
+    print("=" * 60)
+    print(f"方法: {opt_cfg.method} | 目标: {opt_cfg.target_metric} | 最优: {best_score:.3f}")
+    print(f"\n最优参数:")
+    for k, v in vars(best_params).items():
+        print(f"  {k}: {v}")
+
+
+# ====== 每日扫描 ======
+
+def cmd_scan():
+    import yaml
+    from src.strategy.n_pattern import NPatternParams
+    from src.screener.daily_scan import run_daily_scan, ScanConfig
+
+    with open(_PROJECT_ROOT / "config.yaml") as f:
+        cfg = yaml.safe_load(f)
+
+    params = NPatternParams(**cfg.get("n_pattern", {}))
+    scan_cfg = ScanConfig(**cfg.get("screener", {}))
+
+    result = run_daily_scan(params, scan_cfg)
+
+    # Print report
+    print(f"\n{'='*80}")
+    print(f"N字战法 每日扫描 — {result.date}")
+    print(f"{'='*80}")
+    print(f"扫描: {result.total_scanned} 只主板 | 信号: {len(result.signals)} 个 | 耗时: {result.elapsed_seconds}s")
+    print()
+
+    for i, s in enumerate(result.signals, 1):
+        flags = []
+        if s.stab_ok: flags.append("量价双确认")
+        elif s.has_vol_shrink: flags.append("量缩")
+        elif s.has_shadow: flags.append("下影")
+        if s.ma_bullish: flags.append("多头排列")
+        if s.has_limit_up: flags.append("涨停基因")
+        if s.ma_fib_ok: flags.append("MA共振")
+        if s.ma10_broken_intraday: flags.append("⚠️MA10已测")
+        flag_str = " | ".join(flags)
+        warn = " ⚠️MA10日内跌破" if s.ma10_broken_intraday else ""
+
+        print(f"{i:2d}. {s.name}({s.code}) 强{s.strength}{warn}")
+        print(f"    买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price}")
+        print(f"    费波{s.fib_level}({s.fib_price}) MA9={s.ma9} MA10={s.ma10} | 首波+{s.first_rise_pct}% 回调{s.retrace_pct}%({s.retrace_days}天)")
+        if flag_str:
+            print(f"    {flag_str}")
+
+    # Cache for push
+    cache_path = _PROJECT_ROOT / "data" / "last_scan.pkl"
+    with open(cache_path, "wb") as f:
+        pickle.dump(result, f)
+    print(f"\n结果已缓存 → {cache_path}")
+
+
+# ====== 推送 ======
+
+def cmd_push():
+    from src.push.reporter import push_to_feishu
+
+    cache_path = _PROJECT_ROOT / "data" / "last_scan.pkl"
+    if not cache_path.exists():
+        logger.error("没有缓存扫描结果，请先运行 scan")
+        sys.exit(1)
+
+    with open(cache_path, "rb") as f:
+        result = pickle.load(f)
+
+    push_to_feishu(result)
+    print("已推送到飞书")
+
+
+# ====== 一键 ======
+
+def cmd_daily():
+    logger.info("=== N字战法 每日任务 ===")
+    cmd_scan()
+    logger.info("推送结果到飞书...")
+    cmd_push()
+    logger.info("=== 完成 ===")
+
+
+# ====== 测试 Webhook ======
+
+def cmd_test_webhook():
+    from src.feishu.bot import send_text_via_webhook
+
+    msg = f"N字战法系统 Webhook 测试\n时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    if send_text_via_webhook(msg):
+        print("Webhook 测试成功")
+    else:
+        print("Webhook 测试失败，请检查 .env 中的 FEISHU_WEBHOOK_URL")
+
+
+# ====== 命令注册 ======
+
+COMMANDS = {
+    "import": cmd_import,
+    "extract": cmd_extract,
+    "backtest": cmd_backtest,
+    "optimize": cmd_optimize,
+    "scan": cmd_scan,
+    "push": cmd_push,
+    "daily": cmd_daily,
+    "test-webhook": cmd_test_webhook,
+}
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("用法: python -m src.cli <command>")
+        print(f"可用命令: {', '.join(COMMANDS.keys())}")
+        print()
+        print("常用流程:")
+        print("  python -m src.cli import 导出记录.txt    # 导入飞书聊天记录")
+        print("  python -m src.cli extract               # 提取战法规则")
+        print("  python -m src.cli test-webhook          # 测试飞书推送")
+        print("  python -m src.cli daily                 # 扫描+推送")
+        sys.exit(1)
+
+    cmd_name = sys.argv[1]
+    if cmd_name not in COMMANDS:
+        print(f"未知命令: {cmd_name}")
+        print(f"可用命令: {', '.join(COMMANDS.keys())}")
+        sys.exit(1)
+
+    COMMANDS[cmd_name]()
+
+
+if __name__ == "__main__":
+    main()

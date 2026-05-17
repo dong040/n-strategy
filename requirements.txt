@@ -1,0 +1,12 @@
+lark-oapi>=1.0
+mootdx>=0.10
+akshare>=1.10
+pandas>=2.0
+numpy>=1.24
+scipy>=1.10
+pyyaml>=6.0
+python-dotenv>=1.0
+sqlite-utils>=3.0
+click>=8.0
+stockstats>=0.5
+requests>=2.28
