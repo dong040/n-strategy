@@ -230,7 +230,7 @@ def _check_ma_bullish(closes, min_days=3, lookback=5):
     return ma_bullish_now, ma9 > ma10, bullish_days, ma_consistent, ma9, ma10, ma20
 
 
-def _check_limit_up(closes, lookback=60):
+def _check_limit_up(closes, lookback=20):
     """检查近N日涨停次数（>=9.5%近似涨停），返回次数"""
     n = len(closes)
     start = max(0, n - lookback)
@@ -471,7 +471,10 @@ def find_n_signals(
     peaks, troughs = find_extrema(highs, lows)
 
     limit_up_count = _check_limit_up(closes)
-    has_limit_up = limit_up_count >= 2  # 至少2次涨停才算有涨停基因
+    # 硬过滤：近20日至少2次涨停
+    if limit_up_count < 2:
+        return []
+    has_limit_up = True  # 能走到这里说明 >=2
     ma_bullish, ma9_gt_ma10, bullish_days, ma_consistent, ma9, ma10, ma20 = _check_ma_bullish(closes)
 
     last_close = closes[-1]
