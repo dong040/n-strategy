@@ -485,6 +485,8 @@ def find_n_signals(
         for tb in troughs[ti + 1:]:
             if tb < n - 3:
                 continue  # 第二低谷必须在近3日
+            if tb == n - 1:
+                continue  # 最后一天已摸到支撑并拉回，机会在昨天，不在明天
 
             # N结构总时长限制：避免匹配过于久远的历史形态
             total_n_days = tb - ta
