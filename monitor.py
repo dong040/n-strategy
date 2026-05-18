@@ -1,6 +1,7 @@
 """N字战法 盘中监控 + 飞书推送
 
-每分钟轮询标的实时价格，接近入场价时通过飞书 Webhook 推送提醒。
+5 秒轮询，仅在连续竞价时段（9:30-11:30, 13:00-15:00）推送。
+进入预警区立即推送，同一状态持续则每 5 分钟提醒一次。
 
 Usage:
     python3 monitor.py                           # 监控最近一次扫描的 Top 15
@@ -25,9 +26,20 @@ _PROJECT_ROOT = Path(__file__).resolve().parent
 load_dotenv(_PROJECT_ROOT / ".env")
 WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "")
 
+POLL_SECONDS = 5          # 轮询间隔
+REMIND_MINUTES = 5        # 同一状态重复提醒间隔
+
+
+def _in_trading_hours():
+    """连续竞价时段"""
+    now = datetime.now()
+    h, m = now.hour, now.minute
+    morning = (h == 9 and m >= 30) or h == 10 or (h == 11 and m <= 30)
+    afternoon = h == 13 or h == 14 or (h == 15 and m == 0)
+    return morning or afternoon
+
 
 def _push_card(title: str, content: str):
-    """发送飞书卡片消息"""
     if not WEBHOOK_URL:
         print("[WARN] FEISHU_WEBHOOK_URL 未设置，仅终端输出")
         return False
@@ -72,9 +84,6 @@ def main():
 
     print(f"加载 {len(signals)} 只标的, 扫描日 {result.date}")
 
-    # 监控状态: idle → approaching → triggered → stopped_out
-    # 冷却: 每只股票 30 分钟内最多推送一次
-    COOLDOWN = 1800  # seconds
     pool = {}
     for s in signals:
         pool[s.code] = {
@@ -83,19 +92,22 @@ def main():
             "stop": s.stop_loss,
             "target": s.target_price,
             "strength": s.strength,
-            "state": "idle",  # idle | approaching | triggered | stopped_out
-            "last_notify": 0,  # unix timestamp of last push
+            "state": "idle",            # idle | approaching | triggered | stopped_out
+            "state_notified": False,    # 当前状态是否已推送过
+            "last_notify": 0,           # 上次推送时间戳
         }
 
     client = Quotes.factory(market="std", timeout=5)
-    interval = 60
 
     print(f"飞书推送: {'✓' if WEBHOOK_URL else '✗ 未配置'}")
-    print(f"轮询间隔: {interval}s | Ctrl+C 退出\n")
+    print(f"轮询: {POLL_SECONDS}s | 重复提醒: {REMIND_MINUTES}min")
+    print(f"推送时段: 9:30-11:30, 13:00-15:00 | Ctrl+C 退出\n")
 
     while True:
         try:
-            ts = datetime.now().strftime("%H:%M:%S")
+            now = datetime.now()
+            ts = now.strftime("%H:%M:%S")
+            in_trading = _in_trading_hours()
 
             for code, p in pool.items():
                 try:
@@ -109,9 +121,7 @@ def main():
                     name = p["name"]
                     dist = (price - entry) / entry * 100
 
-                    # === 状态机 ===
-                    prev_state = p["state"]
-
+                    # 状态判定
                     if price <= p["stop"]:
                         new_state = "stopped_out"
                     elif price <= entry:
@@ -121,17 +131,31 @@ def main():
                     else:
                         new_state = "idle"
 
-                    # 只在状态变化时推送
-                    if new_state == prev_state:
+                    # 状态变化 → 重置通知标记
+                    if new_state != p["state"]:
+                        p["state"] = new_state
+                        p["state_notified"] = False
+
+                    # idle 状态不推送
+                    if new_state == "idle":
                         continue
 
+                    # 非交易时段不推送（状态照常追踪，9:30 会补推）
+                    if not in_trading:
+                        continue
+
+                    # 是否该推送？
                     now_ts = time.time()
-                    in_cooldown = (now_ts - p["last_notify"]) < COOLDOWN
-                    p["state"] = new_state
+                    should_push = False
+                    if not p["state_notified"]:
+                        should_push = True
+                    elif (now_ts - p["last_notify"]) >= REMIND_MINUTES * 60:
+                        should_push = True
 
-                    if in_cooldown:
+                    if not should_push:
                         continue
 
+                    p["state_notified"] = True
                     p["last_notify"] = now_ts
 
                     # 构建消息
@@ -171,7 +195,7 @@ def main():
                 except Exception:
                     continue
 
-            time.sleep(interval)
+            time.sleep(POLL_SECONDS)
 
         except KeyboardInterrupt:
             print(f"\n监控已停止 — {datetime.now().strftime('%H:%M:%S')}")

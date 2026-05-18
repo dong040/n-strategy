@@ -520,9 +520,13 @@ def find_n_signals(
             if retrace < params.retrace_min or retrace > params.retrace_max:
                 continue
 
-            # 回调天数
+            # 弱趋势 + 深回调 = 动能衰竭
+            if first_rise < 0.15 and retrace > 0.40:
+                continue
+
+            # 回调天数 — 至少3天，快速回撤不是有序回调
             retrace_days = tb - best_p
-            if retrace_days < params.retrace_days_min or retrace_days > params.retrace_days_max:
+            if retrace_days < 3 or retrace_days > params.retrace_days_max:
                 continue
 
             # 费波位
@@ -550,10 +554,12 @@ def find_n_signals(
                     ma_fib_ok = True
                     nearest_ma = ('MA9', ma9)
 
-            # 企稳确认
+            # 企稳确认 — 至少要有一种企稳信号
             stab_ok, has_vol_shrink, has_shadow = _check_stabilization(
                 opens, highs, lows, closes, vols, best_p, tb, params,
             )
+            if not stab_ok and not has_vol_shrink and not has_shadow:
+                continue  # 无任何企稳信号，支撑位没人接盘
 
             # === 入场价：MA10 > MA9 > fib > next_fib ===
             # 均线是市场真实成本，优先于费波理论值
