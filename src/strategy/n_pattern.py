@@ -495,8 +495,6 @@ def find_n_signals(
         for tb in troughs[ti + 1:]:
             if tb < n - 3:
                 continue  # 第二低谷必须在近3日
-            if tb == n - 1:
-                continue  # 最后一天已摸到支撑并拉回，机会在昨天，不在明天
 
             # N结构总时长限制：避免匹配过于久远的历史形态
             total_n_days = tb - ta
@@ -557,36 +555,44 @@ def find_n_signals(
                 opens, highs, lows, closes, vols, best_p, tb, params,
             )
 
-            # === 入场价：fib + MA 平等竞争，取最低者 ===
-            # 均线的参考价值大于 fib 计算值 — 市场真实成本 > 理论位置
+            # === 入场价：MA10 > MA9 > fib > next_fib ===
+            # 均线是市场真实成本，优先于费波理论值
             fib_broken = retrace_low < fib_price * 0.998
             next_level_map = {0.236: 0.382, 0.382: 0.5, 0.5: 0.618}
 
             def _in_range(price):
                 return abs(last_close - price) / price <= fib_dist_max
 
-            candidates = []
-            # fib（未被击穿才有效）
+            entry_price = None
+            supports = []
+            # MA 优先
+            if ma10 is not None and ma10 < last_close:
+                supports.append(round(ma10, 2))
+            if ma9 is not None and ma9 < last_close:
+                supports.append(round(ma9, 2))
+            # fib 兜底
             if not fib_broken:
-                candidates.append(round(fib_price, 2))
+                supports.append(round(fib_price, 2))
             else:
                 next_level = next_level_map.get(fib_level)
                 if next_level:
                     np_fib = first_high - (first_high - first_low) * next_level
                     if np_fib < last_close:
-                        candidates.append(round(np_fib, 2))
-            # MA 始终作为支撑候选（均线参考价值 > fib）
-            if ma10 is not None and ma10 < last_close:
-                candidates.append(round(ma10, 2))
-            if ma9 is not None and ma9 < last_close:
-                candidates.append(round(ma9, 2))
+                        supports.append(round(np_fib, 2))
 
-            valid = [c for c in candidates if _in_range(c)]
-            if not valid:
+            for sp in supports:
+                if _in_range(sp):
+                    entry_price = sp
+                    break
+
+            if entry_price is None:
                 continue  # 无合适支撑位
-            entry_price = round(min(valid), 2)  # 取最低 → 最好入场价
 
             fib_dist = abs(last_close - entry_price) / entry_price
+
+            # 最后一根K线已摸到入场价 → 支撑已测，机会在昨天
+            if lows[-1] <= entry_price:
+                continue
 
             # 止损 = 入场价（跌破支撑位即离场，逻辑失效）
             stop_loss = round(entry_price * 0.995, 2)
