@@ -485,6 +485,12 @@ def find_n_signals(
 
     # === MA 多头排列不持续 → 不硬过滤，改在强度中罚分 ===
 
+    # === 硬过滤：今天涨停 → 回调结束已启动，不是买点 ===
+    if n >= 2 and closes[-2] > 0:
+        today_chg = (closes[-1] - closes[-2]) / closes[-2]
+        if today_chg >= 0.095:
+            return []
+
     # === 硬过滤：今天摸过MA9或MA10 → 支撑已测，机会在今天，明天不推 ===
     today_low = lows[-1]
     if ma10 is not None and today_low < ma10:
@@ -500,8 +506,8 @@ def find_n_signals(
 
     for ti, ta in enumerate(troughs):
         for tb in troughs[ti + 1:]:
-            if tb < n - 3:
-                continue  # 第二低谷必须在近3日
+            if tb < n - 7:
+                continue  # 第二低谷必须在近7日（配合反弹过滤，不会追高）
 
             # N结构总时长限制：避免匹配过于久远的历史形态
             total_n_days = tb - ta
@@ -531,9 +537,16 @@ def find_n_signals(
             if first_rise < 0.15 and retrace > 0.40:
                 continue
 
+            # 底部之后不能已反弹 — N字核心是"跌下来撑住"，不是"已经弹了追高"
+            # 最后一天明显拉升 → 回调结束，反弹已启动
+            if n >= tb + 1 and n >= 2 and closes[-2] > 0:
+                last_chg = (closes[-1] - closes[-2]) / closes[-2]
+                if last_chg > 0.05:
+                    continue
+
             # 回调天数 — 至少3天，快速回撤不是有序回调
             retrace_days = tb - best_p
-            if retrace_days < 3 or retrace_days > params.retrace_days_max:
+            if retrace_days < 2 or retrace_days > params.retrace_days_max:
                 continue
 
             # 费波位
