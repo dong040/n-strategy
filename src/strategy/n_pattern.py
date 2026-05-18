@@ -485,6 +485,13 @@ def find_n_signals(
 
     # === MA 多头排列不持续 → 不硬过滤，改在强度中罚分 ===
 
+    # === 硬过滤：今天摸过MA9或MA10 → 支撑已测，机会在今天，明天不推 ===
+    today_low = lows[-1]
+    if ma10 is not None and today_low < ma10:
+        return []
+    if ma9 is not None and today_low < ma9:
+        return []
+
     # === 检测近期是否跌破过 MA10（日内跌破也算） ===
     recent_lows = lows[-3:] if n >= 3 else lows
     ma10_broken_intraday = (ma10 is not None and any(low < ma10 for low in recent_lows))
