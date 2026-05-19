@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ScanConfig:
-    top_n: int = 15
+    top_n: int = 10
     markets: list = field(default_factory=lambda: ["sh", "sz"])
     exclude_st: bool = True
     exclude_suspend: bool = True

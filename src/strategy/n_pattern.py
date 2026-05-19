@@ -491,11 +491,11 @@ def find_n_signals(
         if today_chg >= 0.095:
             return []
 
-    # === 硬过滤：今天摸过MA9或MA10 → 支撑已测，机会在今天，明天不推 ===
+    # === 硬过滤：今天摸过MA9(2%内)或MA10 → 支撑已测，明天不推 ===
     today_low = lows[-1]
-    if ma10 is not None and today_low < ma10:
+    if ma10 is not None and today_low <= ma10 * 1.002:
         return []
-    if ma9 is not None and today_low < ma9:
+    if ma9 is not None and today_low <= ma9 * 1.02:
         return []
 
     # === 检测近期是否跌破过 MA10（日内跌破也算） ===
@@ -537,25 +537,29 @@ def find_n_signals(
             if first_rise < 0.15 and retrace > 0.40:
                 continue
 
-            # 底部之后不能已反弹 — N字核心是"跌下来撑住"，不是"已经弹了追高"
-            # 最后一天明显拉升 → 回调结束，反弹已启动
-            if n >= tb + 1 and n >= 2 and closes[-2] > 0:
-                last_chg = (closes[-1] - closes[-2]) / closes[-2]
-                if last_chg > 0.05:
-                    continue
-
-            # 回调天数 — 至少3天，快速回撤不是有序回调
+            # 回调天数
             retrace_days = tb - best_p
-            if retrace_days < 2 or retrace_days > params.retrace_days_max:
+            if retrace_days < 1 or retrace_days > params.retrace_days_max:
+                continue
+
+            # V型反转排除 — 跌完立刻涨停拉回 = 没有横盘撑住的过程
+            v_reversal = False
+            for di in range(1, min(4, n - tb)):  # 检查低谷后3天
+                if closes[tb + di - 1] > 0:
+                    chg_di = (closes[tb + di] - closes[tb + di - 1]) / closes[tb + di - 1]
+                    if chg_di >= 0.095:
+                        v_reversal = True
+                        break
+            if v_reversal:
                 continue
 
             # 费波位
             fib_level = _fib_to_level(retrace)
             fib_price = first_high - (first_high - first_low) * fib_level
 
-            # 当前价必须接近费波位（涨停基因 8%，普通 3%）
+            # 当前价必须接近费波位（涨停基因 12%，普通 5%）
             fib_dist = abs(last_close - fib_price) / fib_price
-            fib_dist_max = 0.12 if has_limit_up else 0.03  # 涨停基因允许更宽范围，让MA有机会竞争
+            fib_dist_max = 0.12 if has_limit_up else 0.05
             if fib_dist > fib_dist_max:
                 continue
 
@@ -565,12 +569,12 @@ def find_n_signals(
             nearest_ma = None
             if ma10 is not None:
                 ma10_fib_dist = abs(fib_price - ma10) / fib_price
-                if ma10_fib_dist < 0.03:  # 放宽到3%检查共振
+                if ma10_fib_dist < 0.04:
                     ma_fib_ok = True
                     nearest_ma = ('MA10', ma10)
             if not ma_fib_ok and ma9 is not None:
                 ma9_fib_dist = abs(fib_price - ma9) / fib_price
-                if ma9_fib_dist < 0.03:
+                if ma9_fib_dist < 0.04:
                     ma_fib_ok = True
                     nearest_ma = ('MA9', ma9)
 
@@ -581,40 +585,30 @@ def find_n_signals(
             if not stab_ok and not has_vol_shrink and not has_shadow:
                 continue  # 无任何企稳信号，支撑位没人接盘
 
-            # === 入场价：MA10 > MA9 > fib > next_fib ===
-            # 均线是市场真实成本，优先于费波理论值
+            # === 入场价：只用 MA 支撑 ===
+            # 均线是市场真实成本，费波是理论值。
+            # MA 支撑太远 = 股价没真正回调到位 = 不出信号。
             fib_broken = retrace_low < fib_price * 0.998
-            next_level_map = {0.236: 0.382, 0.382: 0.5, 0.5: 0.618}
-
-            def _in_range(price):
-                return abs(last_close - price) / price <= fib_dist_max
 
             entry_price = None
-            supports = []
-            # MA 优先
+            ma_candidates = []
             if ma10 is not None and ma10 < last_close:
-                supports.append(round(ma10, 2))
+                ma_candidates.append(round(ma10, 2))
             if ma9 is not None and ma9 < last_close:
-                supports.append(round(ma9, 2))
-            # fib 兜底
-            if not fib_broken:
-                supports.append(round(fib_price, 2))
-            else:
-                next_level = next_level_map.get(fib_level)
-                if next_level:
-                    np_fib = first_high - (first_high - first_low) * next_level
-                    if np_fib < last_close:
-                        supports.append(round(np_fib, 2))
+                ma_candidates.append(round(ma9, 2))
 
-            for sp in supports:
-                if _in_range(sp):
-                    entry_price = sp
-                    break
+            if ma_candidates:
+                entry_price = max(ma_candidates)  # 取离现价最近的 MA
 
             if entry_price is None:
-                continue  # 无合适支撑位
+                continue  # 无 MA 支撑
 
-            fib_dist = abs(last_close - entry_price) / entry_price
+            # 现价距 MA 支撑必须 ≤6.5%
+            dist_to_entry = abs(last_close - entry_price) / entry_price
+            if dist_to_entry > 0.065:
+                continue
+
+            fib_dist = dist_to_entry
 
             # 最后一根K线已摸到入场价 → 支撑已测，机会在昨天
             if lows[-1] <= entry_price:

@@ -56,7 +56,7 @@ n_pattern:
 
 # --- 扫描配置 ---
 screener:
-  top_n: 15                     # 每日输出前 N 只
+  top_n: 10                     # 每日输出前 N 只
   markets: ["sh", "sz"]          # 扫描市场：仅主板（60xxxx上海主板 + 000xxx/001xxx深圳主板）
   exclude_st: true              # 排除 ST
   exclude_suspend: true         # 排除停牌
