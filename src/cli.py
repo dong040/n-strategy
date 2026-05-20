@@ -241,15 +241,17 @@ def cmd_scan():
 
     for i, s in enumerate(result.signals, 1):
         flags = []
+        if s.is_big_n: flags.append("大N")
         if s.stab_ok: flags.append("量价双确认")
         elif s.has_vol_shrink: flags.append("量缩")
         elif s.has_shadow: flags.append("下影")
         if s.ma_bullish: flags.append("多头排列")
         if s.has_limit_up: flags.append("涨停基因")
         if s.ma_fib_ok: flags.append("MA共振")
-        if s.ma10_broken_intraday: flags.append("⚠️MA10已测")
+        if s.ma10_broken_close: flags.append("⚠️MA10破位")
+        elif s.ma10_broken_intraday: flags.append("MA10确认")
         flag_str = " | ".join(flags)
-        warn = " ⚠️MA10日内跌破" if s.ma10_broken_intraday else ""
+        warn = " ⚠️MA10破位" if s.ma10_broken_close else (" MA10支撑确认" if s.ma10_broken_intraday else "")
 
         print(f"{i:2d}. {s.name}({s.code}) 强{s.strength}{warn}")
         print(f"    买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} 盈亏比{s.rr_ratio}")

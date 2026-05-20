@@ -86,6 +86,7 @@ class NSignal:
     limit_up_count: int = 0
     ma_fib_ok: bool = False
     ma10_broken_intraday: bool = False
+    ma10_broken_close: bool = False
     nearest_ma: tuple = None
     ma9: float = 0
     ma10: float = 0
@@ -102,6 +103,7 @@ class NSignal:
     rr_ratio: float = 0
     fib_extension_1272: float = 0
     fib_extension_1618: float = 0
+    is_big_n: bool = False
     details: dict = field(default_factory=dict)
 
 
@@ -287,9 +289,11 @@ def _calc_strength(signal_data: dict) -> int:
         else:
             strength += 10  # 2次涨停
 
-    # 罚分：跌破 MA10 再拉回 → 支撑已被测试
-    if signal_data.get('ma10_broken_intraday'):
-        strength -= 15
+    # 罚分：MA10 支撑质量
+    if signal_data.get('ma10_broken_close'):
+        strength -= 15  # 收盘跌破 = 支撑失败
+    elif signal_data.get('ma10_broken_intraday'):
+        strength -= 5   # 日内触及但收在上方 = 支撑确认
 
     # 压力位罚分：区分前高压力 vs 纯整数关口
     entry_to_res = signal_data.get('entry_to_resistance_pct', 100)
@@ -470,9 +474,9 @@ def find_n_signals(
     n = len(closes)
     peaks, troughs = find_extrema(highs, lows)
 
-    limit_up_count = _check_limit_up(closes)
-    # 硬过滤：近20日至少2次涨停
-    if limit_up_count < 2:
+    limit_up_count = _check_limit_up(closes, lookback=30)
+    # 硬过滤：近30日至少1次涨停
+    if limit_up_count < 1:
         return []
     has_limit_up = True  # 能走到这里说明 >=2
     ma_bullish, ma9_gt_ma10, bullish_days, ma_consistent, ma9, ma10, ma20 = _check_ma_bullish(closes)
@@ -491,16 +495,20 @@ def find_n_signals(
         if today_chg >= 0.095:
             return []
 
-    # === 硬过滤：今天摸过MA9(2%内)或MA10 → 支撑已测，明天不推 ===
+    # === 硬过滤：今天收盘跌破MA9/MA10 → 支撑失败，排除 ===
+    # 盘中触及但收盘站回 = 支撑确认为有效，不排除
     today_low = lows[-1]
-    if ma10 is not None and today_low <= ma10 * 1.002:
+    if ma10 is not None and closes[-1] < ma10:
         return []
-    if ma9 is not None and today_low <= ma9 * 1.02:
+    if ma9 is not None and closes[-1] < ma9 * 0.98:
         return []
 
-    # === 检测近期是否跌破过 MA10（日内跌破也算） ===
+    # === 检测近期是否跌破过 MA10 ===
+    # 收盘跌破 = 支撑失败(严重)；仅日内触及但收在上方 = 支撑确认(轻微)
     recent_lows = lows[-3:] if n >= 3 else lows
-    ma10_broken_intraday = (ma10 is not None and any(low < ma10 for low in recent_lows))
+    recent_closes = closes[-3:] if n >= 3 else closes
+    ma10_broken_close = (ma10 is not None and any(c < ma10 for c in recent_closes))
+    ma10_touched_intraday = (ma10 is not None and any(low < ma10 for low in recent_lows))
 
     signals = []
 
@@ -610,7 +618,11 @@ def find_n_signals(
 
             fib_dist = dist_to_entry
 
-            # 最后一根K线已摸到入场价 → 支撑已测，机会在昨天
+            # 收盘跌破入场价 → 支撑失败，排除
+            if closes[-1] < entry_price:
+                continue
+
+            # 今日盘中已触及入场价 → 支撑被测试+弹回，买点是今天不是明天
             if lows[-1] <= entry_price:
                 continue
 
@@ -659,7 +671,8 @@ def find_n_signals(
                 'has_limit_up': has_limit_up,
                 'limit_up_count': limit_up_count,
                 'ma_fib_ok': ma_fib_ok,
-                'ma10_broken_intraday': ma10_broken_intraday,
+                'ma10_broken_intraday': ma10_touched_intraday,
+                'ma10_broken_close': ma10_broken_close,
                 'nearest_ma': nearest_ma,
                 'ma9': round(ma9, 2) if ma9 is not None else None,
                 'ma10': round(ma10, 2) if ma10 is not None else None,
@@ -675,6 +688,136 @@ def find_n_signals(
             sig_data['strength'] = _calc_strength(sig_data)
             sig_data['_tb'] = tb  # 用于去重
             signals.append(sig_data)
+
+    # === 大N扫描：涨停基因 + 跌破小N后在MA10×0.9深度支撑入场 ===
+    # 大N: 股价跌破MA9(小N已破)，在MA10×0.9处寻求深度支撑。
+    # 不要求MA/Fib共振，不要求多头排列。
+    if ma10 is not None and ma10 < last_close and ma9 is not None:
+        big_n_entry = round(ma10 * 0.9, 2)
+        near_or_below_ma9 = last_close <= ma9 * 1.02  # 小N已破
+        above_big_n = last_close > big_n_entry
+        if near_or_below_ma9 and above_big_n:
+            dist_to_big_n = abs(last_close - big_n_entry) / big_n_entry
+            if dist_to_big_n <= 0.10:  # 深度入场，容忍更宽距离
+                for ti, ta in enumerate(troughs):
+                    for tb in troughs[ti + 1:]:
+                        if tb < n - 7:
+                            continue
+                        total_n_days = tb - ta
+                        if total_n_days > 90:
+                            continue
+
+                        peaks_between = [p for p in peaks if ta < p < tb]
+                        if not peaks_between:
+                            continue
+                        best_p = max(peaks_between, key=lambda p: highs[p])
+
+                        first_low = lows[ta]
+                        first_high = highs[best_p]
+                        retrace_low = lows[tb]
+
+                        first_rise = (first_high - first_low) / first_low
+                        if first_rise < 0.05 or first_rise > 0.70:
+                            continue
+
+                        retrace = (first_high - retrace_low) / (first_high - first_low)
+                        if retrace < 0.25 or retrace > 0.65:
+                            continue
+
+                        if first_rise < 0.15 and retrace > 0.40:
+                            continue
+
+                        retrace_days = tb - best_p
+                        if retrace_days < 1 or retrace_days > 15:
+                            continue
+
+                        # V型反转排除
+                        v_reversal = False
+                        for di in range(1, min(4, n - tb)):
+                            if closes[tb + di - 1] > 0:
+                                chg_di = (closes[tb + di] - closes[tb + di - 1]) / closes[tb + di - 1]
+                                if chg_di >= 0.095:
+                                    v_reversal = True
+                                    break
+                        if v_reversal:
+                            continue
+
+                        # 企稳确认
+                        stab_ok, has_vol_shrink, has_shadow = _check_stabilization(
+                            opens, highs, lows, closes, vols, best_p, tb, params,
+                        )
+                        if not stab_ok and not has_vol_shrink and not has_shadow:
+                            continue
+
+                        # 大N入场已测（今日最低已触及入场价）
+                        if lows[-1] <= big_n_entry:
+                            continue
+
+                        # === 大N 信号构建 ===
+                        entry_price = big_n_entry
+                        stop_loss = round(entry_price * 0.995, 2)
+                        target = round(first_high + (first_high - first_low), 2)
+
+                        fib_level = _fib_to_level(retrace)
+                        fib_price = first_high - (first_high - first_low) * fib_level
+
+                        dist_to_entry = abs(last_close - entry_price) / entry_price
+
+                        # 盈亏比
+                        risk = entry_price - stop_loss
+                        reward = target - entry_price
+                        rr_ratio = round(reward / risk, 1) if risk > 0 else 0
+
+                        # 压力位
+                        resistance_levels, broken_levels = _find_resistance_levels(
+                            highs, peaks, entry_price, first_high, first_low, retrace_low,
+                        )
+                        nearest_resistance = resistance_levels[0] if resistance_levels else None
+                        entry_to_resistance_pct = nearest_resistance[2] if nearest_resistance else 0
+
+                        move = first_high - first_low
+                        fib_ext_1272 = round(first_low + move * 1.272, 2) if move > 0 else 0
+                        fib_ext_1618 = round(first_low + move * 1.618, 2) if move > 0 else 0
+
+                        big_sig = {
+                            'entry_price': entry_price,
+                            'stop_loss': stop_loss,
+                            'target_price': target,
+                            'fib_level': fib_level,
+                            'fib_price': round(fib_price, 2),
+                            'fib_dist': round(dist_to_entry, 3),
+                            'first_rise_pct': round(first_rise * 100, 1),
+                            'retrace_pct': round(retrace * 100, 1),
+                            'retrace_days': retrace_days,
+                            'first_peak': round(first_high, 2),
+                            'retrace_low': round(retrace_low, 2),
+                            'stab_ok': stab_ok,
+                            'has_vol_shrink': has_vol_shrink,
+                            'has_shadow': has_shadow,
+                            'ma_bullish': ma_bullish,
+                            'ma9_gt_ma10': ma9_gt_ma10,
+                            'ma_consistent': ma_consistent,
+                            'bullish_days': bullish_days,
+                            'has_limit_up': has_limit_up,
+                            'limit_up_count': limit_up_count,
+                            'ma_fib_ok': False,  # 大N不要求共振
+                            'ma10_broken_intraday': ma10_touched_intraday,
+                            'ma10_broken_close': ma10_broken_close,
+                            'nearest_ma': ('MA10', ma10),
+                            'ma9': round(ma9, 2),
+                            'ma10': round(ma10, 2),
+                            'resistance_levels': resistance_levels,
+                            'broken_levels': broken_levels,
+                            'nearest_resistance': nearest_resistance,
+                            'entry_to_resistance_pct': entry_to_resistance_pct,
+                            'rr_ratio': rr_ratio,
+                            'fib_extension_1272': fib_ext_1272,
+                            'fib_extension_1618': fib_ext_1618,
+                            'is_big_n': True,
+                        }
+                        big_sig['strength'] = _calc_strength(big_sig)
+                        big_sig['_tb'] = f"big_{tb}"
+                        signals.append(big_sig)
 
     # 去重：每个第二低谷保留最强信号
     if signals:
@@ -716,11 +859,11 @@ def score_fundamental(code: str, close: float, client) -> dict:
         result['net_profit_yi'] = net_profit_yi
         result['mcap_yi'] = mcap_yi
 
-        # 亏损股 — 不排除，给负分（可能是周期反转/题材弹性股）
+        # 亏损股 — 纯技术面策略不排除，不给负分
         if jlr <= 0:
             result['pb'] = round(close / mgjzc, 1) if mgjzc > 0 else 0
             result['is_loss_making'] = True
-            result['score'] = -10
+            result['score'] = 0
             return result
 
         pe = mcap / jlr
@@ -813,6 +956,7 @@ def scan_stock(
             limit_up_count=s.get('limit_up_count', 0),
             ma_fib_ok=s['ma_fib_ok'],
             ma10_broken_intraday=s.get('ma10_broken_intraday', False),
+            ma10_broken_close=s.get('ma10_broken_close', False),
             nearest_ma=s.get('nearest_ma'),
             ma9=s.get('ma9') or 0,
             ma10=s.get('ma10') or 0,
@@ -823,12 +967,21 @@ def scan_stock(
             rr_ratio=s.get('rr_ratio', 0),
             fib_extension_1272=s.get('fib_extension_1272', 0),
             fib_extension_1618=s.get('fib_extension_1618', 0),
+            is_big_n=s.get('is_big_n', False),
         )
         result.append(sig)
 
-    # 去重：同一只股票只保留最强信号
+    # 去重：同类型每只股票只保留最强信号，普通N和大N各保留一个
     if result:
-        result.sort(key=lambda x: x.strength, reverse=True)
-        result = result[:1]
+        best_regular = None
+        best_big_n = None
+        for s in result:
+            if s.is_big_n:
+                if best_big_n is None or s.strength > best_big_n.strength:
+                    best_big_n = s
+            else:
+                if best_regular is None or s.strength > best_regular.strength:
+                    best_regular = s
+        result = [s for s in (best_regular, best_big_n) if s is not None]
 
     return result
