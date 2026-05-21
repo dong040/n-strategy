@@ -1,7 +1,7 @@
 """N字战法 盘中监控 + 飞书推送
 
-5 秒轮询，仅在连续竞价时段（9:30-11:30, 13:00-15:00）推送。
-进入预警区立即推送，同一状态持续则每 5 分钟提醒一次。
+5 秒轮询，仅在竞价结束后推送（9:25-11:30, 13:00-15:00）。
+只在状态切换时推送一次，不重复轰炸。
 
 Usage:
     python3 monitor.py                           # 监控最近一次扫描的 Top 15
@@ -26,20 +26,24 @@ _PROJECT_ROOT = Path(__file__).resolve().parent
 load_dotenv(_PROJECT_ROOT / ".env")
 WEBHOOK_URL = os.getenv("FEISHU_WEBHOOK_URL", "")
 
-POLL_SECONDS = 5          # 轮询间隔
-REMIND_MINUTES = 5        # 同一状态重复提醒间隔
+POLL_SECONDS = 5
+
+# 状态定义
+IDLE = "idle"
+APPROACHING = "approaching"   # 距入场 ≤2% 但未触及
+TRIGGERED = "triggered"       # 入场 ≤ price ≤ 止损之上
+STOPPED_OUT = "stopped_out"   # 跌破止损
 
 
 def _in_trading_hours():
-    """连续竞价时段"""
     now = datetime.now()
     h, m = now.hour, now.minute
-    morning = (h == 9 and m >= 30) or h == 10 or (h == 11 and m <= 30)
+    morning = (h == 9 and m >= 25) or h == 10 or (h == 11 and m <= 30)
     afternoon = h == 13 or h == 14 or (h == 15 and m == 0)
     return morning or afternoon
 
 
-def _push_card(title: str, content: str):
+def _push_card(title: str, content: str, color: str = "orange"):
     if not WEBHOOK_URL:
         print("[WARN] FEISHU_WEBHOOK_URL 未设置，仅终端输出")
         return False
@@ -47,7 +51,7 @@ def _push_card(title: str, content: str):
         "config": {"wide_screen_mode": True},
         "header": {
             "title": {"tag": "plain_text", "content": title},
-            "template": "red" if "跌破" in title else "green" if "到位" in title else "orange",
+            "template": color,
         },
         "elements": [{"tag": "markdown", "content": content}],
     }
@@ -92,15 +96,13 @@ def main():
             "stop": s.stop_loss,
             "target": s.target_price,
             "strength": s.strength,
-            "state": "idle",            # idle | approaching | triggered | stopped_out
-            "state_notified": False,    # 当前状态是否已推送过
-            "last_notify": 0,           # 上次推送时间戳
+            "state": IDLE,
         }
 
     client = Quotes.factory(market="std", timeout=5)
 
     print(f"飞书推送: {'✓' if WEBHOOK_URL else '✗ 未配置'}")
-    print(f"轮询: {POLL_SECONDS}s | 重复提醒: {REMIND_MINUTES}min")
+    print(f"轮询: {POLL_SECONDS}s | 仅在状态切换时推送")
     print(f"推送时段: 9:30-11:30, 13:00-15:00 | Ctrl+C 退出\n")
 
     while True:
@@ -123,74 +125,70 @@ def main():
 
                     # 状态判定
                     if price <= p["stop"]:
-                        new_state = "stopped_out"
+                        new_state = STOPPED_OUT
                     elif price <= entry:
-                        new_state = "triggered"
+                        new_state = TRIGGERED
                     elif abs(dist) <= 2:
-                        new_state = "approaching"
+                        new_state = APPROACHING
                     else:
-                        new_state = "idle"
+                        new_state = IDLE
 
-                    # 状态变化 → 重置通知标记
-                    if new_state != p["state"]:
-                        p["state"] = new_state
-                        p["state_notified"] = False
-
-                    # idle 状态不推送
-                    if new_state == "idle":
+                    # 无变化不推送
+                    if new_state == p["state"]:
                         continue
 
-                    # 非交易时段不推送（状态照常追踪，9:30 会补推）
+                    old_state = p["state"]
+                    p["state"] = new_state
+
+                    # 非交易时段记录状态变化但不推送
                     if not in_trading:
+                        print(f"[{ts}] 状态追踪: {name} {old_state} → {new_state} (非交易时段)")
                         continue
 
-                    # 是否该推送？
-                    now_ts = time.time()
-                    should_push = False
-                    if not p["state_notified"]:
-                        should_push = True
-                    elif (now_ts - p["last_notify"]) >= REMIND_MINUTES * 60:
-                        should_push = True
+                    # === 状态切换 → 推送一次 ===
 
-                    if not should_push:
-                        continue
-
-                    p["state_notified"] = True
-                    p["last_notify"] = now_ts
-
-                    # 构建消息
-                    if new_state == "approaching":
+                    if new_state == APPROACHING:
                         title = f"贴近买入区 — {name}({code})"
-                        body_lines = [
-                            f"**{name}**({code}) 强**{p['strength']}**",
-                            f"现价 **{price:.2f}** → 入场价 **{entry:.2f}** (+{dist:.1f}%)",
-                            f"止损 {p['stop']} | 目标 {p['target']}",
-                            f"时间: {ts}",
-                        ]
-                        print(f"[{ts}] 🔴 {name}({code}) 贴近 +{dist:.1f}% 现价{price:.2f}")
-                        _push_card(title, "\n".join(body_lines))
+                        body = (
+                            f"**{name}**({code}) 强**{p['strength']}**\n"
+                            f"现价 **{price:.2f}** → 入场价 **{entry:.2f}** (+{dist:.1f}%)\n"
+                            f"止损 {p['stop']} | 目标 {p['target']}\n"
+                            f"时间: {ts}"
+                        )
+                        print(f"[{ts}] 🔴 {name}({code}) 贴近买入区 +{dist:.1f}% 现价{price:.2f}")
+                        _push_card(title, body, "orange")
 
-                    elif new_state == "triggered":
-                        title = f"到位买入区 — {name}({code})"
-                        body_lines = [
-                            f"**{name}**({code}) 强**{p['strength']}**",
-                            f"现价 **{price:.2f}** 已触及入场价 **{entry:.2f}** ({dist:.1f}%)",
-                            f"止损 {p['stop']} | 目标 {p['target']}",
-                            f"时间: {ts}",
-                        ]
-                        print(f"[{ts}] 🟢 {name}({code}) 到位 {dist:.1f}% 现价{price:.2f}")
-                        _push_card(title, "\n".join(body_lines))
+                    elif new_state == TRIGGERED:
+                        title = f"到达买入区 — {name}({code})"
+                        body = (
+                            f"**{name}**({code}) 强**{p['strength']}**\n"
+                            f"现价 **{price:.2f}** 已进入买入区 (入场 **{entry:.2f}**, {dist:.1f}%)\n"
+                            f"止损 {p['stop']} | 目标 {p['target']}\n"
+                            f"时间: {ts}"
+                        )
+                        print(f"[{ts}] 🟢 {name}({code}) 到达买入区 {dist:.1f}% 现价{price:.2f}")
+                        _push_card(title, body, "green")
 
-                    elif new_state == "stopped_out":
-                        title = f"已跌破止损 — {name}({code})"
-                        body_lines = [
-                            f"**{name}**({code}) 强**{p['strength']}**",
-                            f"现价 **{price:.2f}** 已跌破止损 **{p['stop']}**",
-                            f"入场 {entry} → 止损位 {p['stop']} 无效",
-                            f"时间: {ts}",
-                        ]
+                    elif new_state == STOPPED_OUT:
+                        title = f"跌破止损 — {name}({code})"
+                        body = (
+                            f"**{name}**({code}) 强**{p['strength']}**\n"
+                            f"现价 **{price:.2f}** 已跌破止损 **{p['stop']}**\n"
+                            f"入场 {entry} | 时间: {ts}"
+                        )
                         print(f"[{ts}] ⚠️  {name}({code}) 跌破止损 现价{price:.2f}")
-                        _push_card(title, "\n".join(body_lines))
+                        _push_card(title, body, "red")
+
+                    elif new_state == IDLE:
+                        # 从关注区回到空闲 → 通知离开
+                        title = f"离开买入区 — {name}({code})"
+                        body = (
+                            f"**{name}**({code}) 强**{p['strength']}**\n"
+                            f"现价 **{price:.2f}** 已远离入场价 **{entry:.2f}** (+{dist:.1f}%)\n"
+                            f"时间: {ts}"
+                        )
+                        print(f"[{ts}] 🔵 {name}({code}) 离开买入区 +{dist:.1f}% 现价{price:.2f}")
+                        _push_card(title, body, "blue")
 
                 except Exception:
                     continue
