@@ -318,6 +318,12 @@ def _calc_strength(signal_data: dict) -> int:
     elif rr < 1:
         strength -= 10  # 盈亏比 < 1:1 不划算
 
+    # 大盘环境调整：弱势守住支撑=强庄，强势守住=随大流
+    market_pct = signal_data.get('market_pct', 0)
+    market_bonus = -round(market_pct * 10)  # -2% → +20, +1% → -10
+    market_bonus = max(-25, min(25, market_bonus))  # 封顶 ±25
+    strength += market_bonus
+
     return max(0, strength)
 
 
