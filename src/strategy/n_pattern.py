@@ -104,6 +104,8 @@ class NSignal:
     fib_extension_1272: float = 0
     fib_extension_1618: float = 0
     is_big_n: bool = False
+    market_pct: float = 0  # 当日大盘涨跌幅
+    entry_source: str = ""  # 入场价来源: MA9/MA10/回调低/费波
     details: dict = field(default_factory=dict)
 
 
@@ -463,6 +465,7 @@ def find_n_signals(
     closes: np.ndarray,
     vols: np.ndarray,
     params: NPatternParams,
+    market_pct: float = 0,
 ) -> list[dict]:
     """扫描K线中的 N 字买点
 
@@ -593,25 +596,37 @@ def find_n_signals(
             if not stab_ok and not has_vol_shrink and not has_shadow:
                 continue  # 无任何企稳信号，支撑位没人接盘
 
-            # === 入场价：只用 MA 支撑 ===
-            # 均线是市场真实成本，费波是理论值。
-            # MA 支撑太远 = 股价没真正回调到位 = 不出信号。
-            fib_broken = retrace_low < fib_price * 0.998
-
-            entry_price = None
-            ma_candidates = []
-            if ma10 is not None and ma10 < last_close:
-                ma_candidates.append(round(ma10, 2))
+            # === 入场价：四候选 + 大盘环境 ===
+            # 候选: MA9, MA10, 回调低点, 费波位 (必须 < 当前价)
+            candidates = []
             if ma9 is not None and ma9 < last_close:
-                ma_candidates.append(round(ma9, 2))
+                candidates.append(('MA9', round(ma9, 2)))
+            if ma10 is not None and ma10 < last_close:
+                candidates.append(('MA10', round(ma10, 2)))
+            if retrace_low < last_close:
+                candidates.append(('回调低', round(retrace_low, 2)))
+            fib_price_rounded = round(fib_price, 2)
+            if fib_price_rounded < last_close:
+                candidates.append(('费波', fib_price_rounded))
 
-            if ma_candidates:
-                entry_price = max(ma_candidates)  # 取离现价最近的 MA
+            if not candidates:
+                continue
 
-            if entry_price is None:
-                continue  # 无 MA 支撑
+            candidates.sort(key=lambda x: x[1])  # 价格升序
 
-            # 现价距 MA 支撑必须 ≤6.5%
+            # 大盘环境选择入场价
+            if market_pct > 0.5:
+                # 强势: 取最高候选 (资金积极，浅回调即承接)
+                entry_source, entry_price = candidates[-1]
+            elif market_pct < -0.5:
+                # 弱势: 取最低候选 (深回调才接，支撑容易破)
+                entry_source, entry_price = candidates[0]
+            else:
+                # 平盘: 取中间候选
+                mid = len(candidates) // 2
+                entry_source, entry_price = candidates[mid]
+
+            # 现价距入场支撑必须 ≤6.5%
             dist_to_entry = abs(last_close - entry_price) / entry_price
             if dist_to_entry > 0.065:
                 continue
@@ -651,6 +666,8 @@ def find_n_signals(
 
             sig_data = {
                 'entry_price': entry_price,
+                'entry_source': entry_source,
+                'market_pct': market_pct,
                 'stop_loss': stop_loss,
                 'target_price': target,
                 'fib_level': fib_level,
@@ -781,6 +798,8 @@ def find_n_signals(
 
                         big_sig = {
                             'entry_price': entry_price,
+                            'entry_source': '大N',
+                            'market_pct': market_pct,
                             'stop_loss': stop_loss,
                             'target_price': target,
                             'fib_level': fib_level,
@@ -918,6 +937,7 @@ def scan_stock(
     name: str,
     df: pd.DataFrame,
     params: NPatternParams,
+    market_pct: float = 0,
 ) -> list[NSignal]:
     """扫描单只股票的 N 字信号"""
     opens = df['open'].values
@@ -926,7 +946,7 @@ def scan_stock(
     closes = df['close'].values
     vols = df['volume'].values
 
-    raw_signals = find_n_signals(opens, highs, lows, closes, vols, params)
+    raw_signals = find_n_signals(opens, highs, lows, closes, vols, params, market_pct)
 
     result = []
     for s in raw_signals:
@@ -968,6 +988,8 @@ def scan_stock(
             fib_extension_1272=s.get('fib_extension_1272', 0),
             fib_extension_1618=s.get('fib_extension_1618', 0),
             is_big_n=s.get('is_big_n', False),
+            market_pct=s.get('market_pct', 0),
+            entry_source=s.get('entry_source', ''),
         )
         result.append(sig)
 

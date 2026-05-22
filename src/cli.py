@@ -232,9 +232,13 @@ def cmd_scan():
 
     result = run_daily_scan(params, scan_cfg)
 
+    # Market label
+    mkt = result.signals[0].market_pct if result.signals else 0
+    mkt_label = f"大盘{mkt:+.2f}% " + ("强势" if mkt > 0.5 else ("弱势" if mkt < -0.5 else "平盘"))
+
     # Print report
     print(f"\n{'='*80}")
-    print(f"N字战法 每日扫描 — {result.date}")
+    print(f"N字战法 每日扫描 — {result.date} | {mkt_label}")
     print(f"{'='*80}")
     print(f"扫描: {result.total_scanned} 只主板 | 信号: {len(result.signals)} 个 | 耗时: {result.elapsed_seconds}s")
     print()
@@ -253,8 +257,10 @@ def cmd_scan():
         flag_str = " | ".join(flags)
         warn = " ⚠️MA10破位" if s.ma10_broken_close else (" MA10支撑确认" if s.ma10_broken_intraday else "")
 
+        src = f" [{s.entry_source}]" if s.entry_source else ""
+
         print(f"{i:2d}. {s.name}({s.code}) 强{s.strength}{warn}")
-        print(f"    买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} 盈亏比{s.rr_ratio}")
+        print(f"    买入{s.entry_price}{src} 止损{s.stop_loss} 目标{s.target_price} 盈亏比{s.rr_ratio}")
         print(f"    费波{s.fib_level}({s.fib_price}) MA9={s.ma9} MA10={s.ma10} | 首波+{s.first_rise_pct}% 回调{s.retrace_pct}%({s.retrace_days}天)")
         if s.broken_levels:
             brk_strs = [f"{label}{price}(已突破)" for label, price, dist in s.broken_levels[:2]]

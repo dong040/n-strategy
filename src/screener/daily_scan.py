@@ -56,6 +56,20 @@ def _fetch_klines(code: str, client, offset: int = 80):
         return None
 
 
+def _get_market_pct(client) -> float:
+    """获取今日上证指数涨跌幅(%)"""
+    try:
+        df = client.quotes(symbol='999999')
+        if df is not None and not df.empty:
+            price = float(df.iloc[-1]['price'])
+            last_close = float(df.iloc[-1]['last_close'])
+            if last_close > 0:
+                return round((price - last_close) / last_close * 100, 2)
+    except Exception:
+        pass
+    return 0
+
+
 def run_daily_scan(
     params: NPatternParams = None,
     scan_config: ScanConfig = None,
@@ -72,7 +86,7 @@ def run_daily_scan(
     logger.info(f"=== N字战法 每日扫描 {today} ===")
 
     # 1. 获取主板股票列表
-    logger.info("1/3 获取主板股票列表...")
+    logger.info("1/4 获取主板股票列表...")
     try:
         stocks_df = _get_main_board_stocks()
         codes = stocks_df['code'].tolist()
@@ -86,8 +100,13 @@ def run_daily_scan(
     from mootdx.quotes import Quotes
     client = Quotes.factory(market='std', timeout=10)
 
+    # 2.5 获取今日大盘涨跌
+    market_pct = _get_market_pct(client)
+    mkt_label = "强势" if market_pct > 0.5 else ("弱势" if market_pct < -0.5 else "平盘")
+    logger.info(f"2/3 大盘 {market_pct:+.2f}% [{mkt_label}]")
+
     # 3. 逐只扫描
-    logger.info(f"2/3 扫描形态 ({len(codes)} 只)...")
+    logger.info(f"3/4 扫描形态 ({len(codes)} 只)...")
     all_signals = []
     errors = 0
     report_interval = max(1, len(codes) // 5)
@@ -101,7 +120,7 @@ def run_daily_scan(
             if df is None:
                 continue
 
-            signals = scan_stock(code, names.get(code, ''), df, params)
+            signals = scan_stock(code, names.get(code, ''), df, params, market_pct)
 
             # 基本面过滤 — 亏损可留，盈利垃圾必除
             if signals:
@@ -125,7 +144,7 @@ def run_daily_scan(
     all_signals.sort(key=lambda s: s.strength, reverse=True)
 
     elapsed = time.time() - start_time
-    logger.info(f"3/3 完成: {len(all_signals)} 信号, {errors} 错误, 耗时 {elapsed:.0f}s")
+    logger.info(f"4/4 完成: {len(all_signals)} 信号, {errors} 错误, 耗时 {elapsed:.0f}s")
 
     return ScanResult(
         date=today,
