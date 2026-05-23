@@ -255,16 +255,16 @@ def _calc_strength(signal_data: dict) -> int:
     elif signal_data.get('has_vol_shrink') or signal_data.get('has_shadow'):
         strength += 8
     # 多头排列：持续3日+满分，2日半奖，1日无加分，0日重罚
+    ma_bullish = signal_data.get('ma_bullish', False)
     bullish_days = signal_data.get('bullish_days', 0)
-    if bullish_days >= 3:
-        strength += 15  # 持续多头排列 = 强趋势
-    elif bullish_days >= 2:
-        strength += 5   # 刚形成多头排列
-    elif bullish_days == 0:
-        strength -= 15  # MA 未形成多头排列
-    # bullish_days == 1: 不加不扣
-    if signal_data.get('ma_bullish'):
-        strength += 5
+    if ma_bullish:
+        if bullish_days >= 3:
+            strength += 15  # 持续多头排列 = 强趋势
+        elif bullish_days >= 2:
+            strength += 5   # 刚形成多头排列
+        strength += 5  # 今日多头排列
+    else:
+        strength -= 10  # 今日不是多头排列（含刚失去的情况）
     if signal_data.get('has_vol_shrink'):
         strength += 8
     if signal_data.get('has_shadow'):
@@ -492,7 +492,16 @@ def find_n_signals(
 
     last_close = closes[-1]
 
-    # === 硬过滤1：收盘价跌破 MA10 → 支撑已失效，整只跳过 ===
+    # === 硬过滤：中期趋势向下 → 下跌趋势中的反弹不参与 ===
+    if n >= 65:
+        ma60_now = float(np.mean(closes[-60:]))
+        ma60_5ago = float(np.mean(closes[-65:-5]))
+        if ma60_5ago > 0:
+            ma60_slope = (ma60_now - ma60_5ago) / ma60_5ago
+            if ma60_slope < -0.002:  # MA60 下降 >0.2%
+                return []
+
+    # === 硬过滤：收盘价跌破 MA10 → 支撑已失效，整只跳过 ===
     if ma10 is not None and last_close < ma10:
         return []
 
