@@ -652,10 +652,13 @@ def find_n_signals(
             if closes[-1] < entry_price:
                 continue
 
-            # 今日盘中已贴近/触及入场价 → 支撑已被测试，买点是今天不是明天
-            # 0.5%容忍度：雅克科技案例 最低110.32 vs MA9=110.29, 差3分但已触支撑反弹
+            # 今日盘中贴近/触及入场价 → 需要判断是否已有效反弹
+            # 反弹>3% = 支撑已测+强力拉起，买点已过（雅克科技+5.6%）
+            # 反弹<3% = 只是蹭了一下支撑，明天仍可能是买点（万润科技+1.5%）
             if lows[-1] <= entry_price * 1.005:
-                continue
+                bounce_from_low = (closes[-1] - lows[-1]) / lows[-1]
+                if bounce_from_low > 0.03:
+                    continue
 
             # 止损 = 入场价（跌破支撑位即离场，逻辑失效）
             stop_loss = round(entry_price * 0.995, 2)
