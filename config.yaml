@@ -53,10 +53,16 @@ n_pattern:
   max_mcap_yi: 500              # 最大市值(亿)
   min_mcap_yi: 20               # 最小市值(亿)
   min_turnover_wan: 5000        # 最小日成交额(万)
+  enable_trading_factors: true  # 启用交易行为因子评分
+  high_win_mode: true           # 高胜率模式：收盘强 + 波动缩 + 压力空间过滤
+  high_win_min_close_position_score: 5
+  high_win_min_volatility_contraction_score: 5
+  high_win_min_resistance_pct: 3.0
+  high_win_min_rr: 1.5
 
 # --- 扫描配置 ---
 screener:
-  top_n: 10                     # 每日输出前 N 只
+  top_n: 3                      # 每日输出前 N 只 (受 max_positions 约束)
   markets: ["sh", "sz"]          # 扫描市场：仅主板（60xxxx上海主板 + 000xxx/001xxx深圳主板）
   exclude_st: true              # 排除 ST
   exclude_suspend: true         # 排除停牌
@@ -70,6 +76,7 @@ backtest:
   slippage_pct: 0.001           # 滑点 0.1%
   init_cash: 1000000            # 初始资金（元）
   max_position_pct: 0.2         # 单票最大仓位 20%
+  max_positions: 3              # 最大同时持仓数
   lookback_years: 3             # 回测年数
 
 # --- 优化器配置 ---

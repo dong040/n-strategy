@@ -258,8 +258,12 @@ def cmd_scan():
         warn = " ⚠️MA10破位" if s.ma10_broken_close else (" MA10支撑确认" if s.ma10_broken_intraday else "")
 
         src = f" [{s.entry_source}]" if s.entry_source else ""
+        tier = (s.details or {}).get("selection_tier", "high_win")
+        tier_label = "兜底" if tier == "fallback" else "高胜率"
 
-        print(f"{i:2d}. {s.name}({s.code}) 强{s.strength}{warn}")
+        print(f"{i:2d}. {s.name}({s.code}) 强{s.strength} [{tier_label}]{warn}")
+        if s.tradingagents_action:
+            print(f"    🤖TA: {s.tradingagents_action}(conf={s.tradingagents_confidence:.1f} 分歧={s.tradingagents_divergence:.1f})")
         print(f"    买入{s.entry_price}{src} 止损{s.stop_loss} 目标{s.target_price} 盈亏比{s.rr_ratio}")
         print(f"    费波{s.fib_level}({s.fib_price}) MA9={s.ma9} MA10={s.ma10} | 首波+{s.first_rise_pct}% 回调{s.retrace_pct}%({s.retrace_days}天)")
         if s.broken_levels:
@@ -272,6 +276,31 @@ def cmd_scan():
             print(f"    Fib扩展 127.2%={s.fib_extension_1272} 161.8%={s.fib_extension_1618}")
         if flag_str:
             print(f"    {flag_str}")
+        print(
+            f"    因子{s.factor_score:+d}: "
+            f"缩量{s.pullback_volume_score:+d} "
+            f"拥挤{s.turnover_crowding_score:+d} "
+            f"强弱{s.relative_strength_score:+d} "
+            f"波动{s.volatility_contraction_score:+d} "
+            f"收回{s.support_reclaim_score:+d} "
+            f"收盘{s.close_position_score:+d} "
+            f"涨停承接{s.limit_up_followthrough_score:+d} "
+            f"题材{s.theme_heat_score:+d} "
+            f"额质{s.amount_quality_score:+d} "
+            f"大盘{s.market_regime_score:+d} "
+            f"北向{s.northbound_flow_score:+d} "
+            f"RSI{s.rsi_divergence_score:+d} "
+            f"MACD{s.macd_signal_score:+d} "
+            f"MA排{s.ma_alignment_score:+d} "
+            f"BOLL{s.boll_squeeze_score:+d} "
+            f"KDJ{s.kdj_oversold_score:+d} "
+            f"MFI{s.mfi_score:+d} "
+            f"影线{s.shadow_quality_score:+d} "
+            f"回速{s.pullback_speed_score:+d} "
+            f"日内反转{s.intraday_reversal_score:+d} "
+            f"量衰{s.volume_climax_score:+d} "
+            f"行业{s.sector_relative_score:+d}"
+        )
 
     # Cache for push
     cache_path = _PROJECT_ROOT / "data" / "last_scan.pkl"

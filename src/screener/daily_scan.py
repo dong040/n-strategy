@@ -9,17 +9,18 @@
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 
 from ..strategy.n_pattern import NPatternParams, NSignal, scan_stock, score_fundamental
+from .data_fetcher import get_live_factor_data, get_stock_industry_map
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ScanConfig:
-    top_n: int = 10
+    top_n: int = 3               # 每日输出前 N 只 (受 max_positions 约束)
     markets: list = field(default_factory=lambda: ["sh", "sz"])
     exclude_st: bool = True
     exclude_suspend: bool = True
@@ -105,11 +106,42 @@ def run_daily_scan(
     mkt_label = "强势" if market_pct > 0.5 else ("弱势" if market_pct < -0.5 else "平盘")
     logger.info(f"2/3 大盘 {market_pct:+.2f}% [{mkt_label}]")
 
+    # 2.6 获取实时因子数据（同花顺热点/行业排名/北向资金/行业映射）
+    logger.info("2.5/4 获取实时因子数据...")
+    live_data = get_live_factor_data()
+    try:
+        industry_map = get_stock_industry_map()
+        live_data["_sector_map"] = industry_map
+        logger.info(f"  行业映射: {len(industry_map)} 只")
+    except Exception:
+        live_data["_sector_map"] = {}
+
     # 3. 逐只扫描
     logger.info(f"3/4 扫描形态 ({len(codes)} 只)...")
     all_signals = []
+    fallback_signals = []
     errors = 0
     report_interval = max(1, len(codes) // 5)
+    relaxed_params = replace(params, high_win_mode=False) if params.high_win_mode else params
+
+    def _enrich_and_filter(signals: list, df, code: str, tier: str) -> list:
+        if not signals:
+            return []
+        last_close = df['close'].values[-1]
+        fin = score_fundamental(code, last_close, client)
+        out = []
+        for sig in signals:
+            sig.pe = fin['pe']
+            sig.pb = fin['pb']
+            sig.net_profit_yi = fin['net_profit_yi']
+            sig.fundamental_score = fin['score']
+            sig.details = dict(sig.details or {})
+            sig.details["selection_tier"] = tier
+            if fin['is_garbage_profitable']:
+                continue
+            sig.strength += fin['score']
+            out.append(sig)
+        return out
 
     for idx, code in enumerate(codes):
         if idx % report_interval == 0:
@@ -120,28 +152,43 @@ def run_daily_scan(
             if df is None:
                 continue
 
-            signals = scan_stock(code, names.get(code, ''), df, params, market_pct)
+            signals = scan_stock(code, names.get(code, ''), df, params, market_pct, live_data=live_data)
+            all_signals.extend(_enrich_and_filter(signals, df, code, "high_win"))
 
-            # 基本面过滤 — 亏损可留，盈利垃圾必除
-            if signals:
-                last_close = df['close'].values[-1]
-                fin = score_fundamental(code, last_close, client)
-                sig = signals[0]
-                sig.pe = fin['pe']
-                sig.pb = fin['pb']
-                sig.net_profit_yi = fin['net_profit_yi']
-                sig.fundamental_score = fin['score']
-                if fin['is_garbage_profitable']:
-                    continue  # 盈利但微利+高PE/小市值 → 垃圾股排除
-                sig.strength += fin['score']
-
-            all_signals.extend(signals)
+            # 高胜率模式下保留一份宽松候选池，只有严格池不足时才兜底使用。
+            if params.high_win_mode and not signals:
+                relaxed = scan_stock(
+                    code, names.get(code, ''), df, relaxed_params, market_pct, live_data=live_data,
+                )
+                fallback_signals.extend(_enrich_and_filter(relaxed, df, code, "fallback"))
         except Exception:
             errors += 1
             continue
 
     # 4. 排序
     all_signals.sort(key=lambda s: s.strength, reverse=True)
+    fallback_signals.sort(key=lambda s: s.strength, reverse=True)
+
+    # 4.5 高胜率兜底：严格信号不足 top_n 时，才用宽松候选补齐并标注 selection_tier=fallback。
+    if params.high_win_mode and len(all_signals) < scan_config.top_n:
+        need = scan_config.top_n - len(all_signals)
+        selected_codes = {s.code for s in all_signals}
+        fill = [s for s in fallback_signals if s.code not in selected_codes][:need]
+        all_signals = all_signals + fill
+        logger.info(f"高胜率信号不足 ({len(all_signals) - len(fill)}/{scan_config.top_n})，兜底补齐 {len(fill)} 只")
+
+    # 5. TradingAgents 多智能体二次打分 (Top N)
+    ta_count = 0
+    try:
+        from .tradingagents_scorer import score_top_candidates
+        top_n_ta = min(scan_config.top_n, 5)
+        score_top_candidates(all_signals[:top_n_ta], top_n=top_n_ta)
+        ta_count = top_n_ta
+        logger.info(f"TradingAgents 二次打分完成 ({ta_count} 只)")
+    except ImportError:
+        logger.debug("TradingAgents 未安装，跳过二次打分")
+    except Exception as e:
+        logger.warning(f"TradingAgents 二次打分失败: {e}")
 
     elapsed = time.time() - start_time
     logger.info(f"4/4 完成: {len(all_signals)} 信号, {errors} 错误, 耗时 {elapsed:.0f}s")

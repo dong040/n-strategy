@@ -26,17 +26,20 @@ def format_signal_line(s: NSignal, idx: int) -> str:
     resistance = ""
     if s.resistance_levels:
         r = s.resistance_levels[0]
-        resistance = f" | 压力 {r[1]}(+{r[2]}%)"
+        resistance = f" | {r[0]} {r[1]}(+{r[2]}%)"
     if s.ma10_broken_close:
         warn = " ⚠️MA10破位"
     elif s.ma10_broken_intraday:
         warn = " MA10支撑确认"
     else:
         warn = ""
+    tier = (s.details or {}).get("selection_tier", "high_win")
+    tier_label = "兜底" if tier == "fallback" else "高胜率"
 
     return (
         f"{idx}. {emoji} **{s.name}**({s.code}) "
-        f"买入**{s.entry_price}** | {support} | {n_type} | 强**{s.strength}**{resistance}{warn}"
+        f"买入**{s.entry_price}** | {support} | {n_type} | {tier_label} | 强**{s.strength}**{resistance}{warn}"
+        f" | 因子{s.factor_score:+d}"
     )
 
 
@@ -73,10 +76,12 @@ def build_text_report(result: ScanResult) -> str:
 
     for i, s in enumerate(result.signals, 1):
         emoji = _strength_emoji(s.strength)
+        tier = (s.details or {}).get("selection_tier", "high_win")
+        tier_label = "兜底" if tier == "fallback" else "高胜率"
         lines.append(
             f"{i}. {emoji} {s.name}({s.code}) "
             f"买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} "
-            f"强{s.strength} 费波{s.fib_level}"
+            f"强{s.strength} {tier_label} 费波{s.fib_level}"
         )
     return "\n".join(lines)
 
@@ -118,12 +123,13 @@ def push_via_webhook(results: list, top_n: int = 15) -> bool:
         resistance = ""
         if r.resistance_levels:
             res = r.resistance_levels[0]
-            resistance = f" | 压力 {res[1]}(+{res[2]}%)"
+            resistance = f" | {res[0]} {res[1]}(+{res[2]}%)"
         warn = " ⚠️MA10已测" if r.ma10_broken_intraday else ""
 
         lines.append(
             f"{i+1}. {emoji} **{r.name}**({r.code}) "
-            f"买入**{r.entry_price}** | {support} | {n_type} | 强**{r.strength}**{resistance}{warn}"
+            f"买入**{r.entry_price}** | {support} | {n_type} | 强**{r.strength}**"
+            f" | 因子{r.factor_score:+d}{resistance}{warn}"
         )
 
     lines.append("")

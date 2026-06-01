@@ -21,6 +21,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+_industry_cache: dict[str, str] = {}
 
 
 # ====== 全 A 股列表 ======
@@ -189,7 +190,113 @@ def get_industry_comparison() -> pd.DataFrame:
     return df
 
 
-# ====== 北向资金 ======
+def get_stock_industry_map() -> dict[str, str]:
+    """获取股票代码 → 同花顺行业名称的映射。
+
+    使用 akshare 的 stock_board_industry_cons_ths 逐个行业获取成分股，
+    构建反向映射。结果会被缓存到模块级别避免重复请求。
+    """
+    global _industry_cache
+    if "_industry_cache" not in globals():
+        _industry_cache = {}
+
+    if _industry_cache:
+        return _industry_cache
+
+    import akshare as ak
+
+    try:
+        # 获取所有行业板块列表
+        industry_df = ak.stock_board_industry_summary_ths()
+        if industry_df.empty:
+            return {}
+
+        # 列名兼容不同 akshare 版本
+        name_col = next((c for c in ["板块名称", "name", "行业"] if c in industry_df.columns), industry_df.columns[0])
+        industry_names = industry_df[name_col].tolist()
+        logger.info(f"获取行业成分股映射 ({len(industry_names)} 个行业)...")
+
+        code_to_industry = {}
+        for idx, name in enumerate(industry_names):
+            try:
+                cons_df = ak.stock_board_industry_cons_ths(symbol=name)
+                if cons_df is not None and not cons_df.empty:
+                    code_col = "代码" if "代码" in cons_df.columns else "code"
+                    for code in cons_df[code_col]:
+                        code_to_industry[str(code).zfill(6)] = name
+            except Exception:
+                continue
+            if (idx + 1) % 20 == 0:
+                logger.debug(f"  行业映射进度: {idx+1}/{len(industry_names)}")
+
+        _industry_cache = code_to_industry
+        logger.info(f"行业映射完成: {len(code_to_industry)} 只股票")
+        return code_to_industry
+
+    except Exception as e:
+        logger.warning(f"获取行业映射失败: {e}")
+        return {}
+
+
+def get_live_factor_data() -> dict:
+    """获取实时因子数据：热点股票、行业排名、北向流向。
+
+    在每日扫描开始时调用一次，避免逐只重复请求。
+    """
+    result = {
+        "hot_code_set": set(),
+        "sector_rank": {},       # {行业名: 排名百分位 0~1, 0=最强}
+        "northbound_score": 0,   # -5 ~ +5
+    }
+
+    # 1. 同花顺热点股票
+    try:
+        hot_df = get_hot_stocks()
+        if not hot_df.empty:
+            code_col = next((c for c in ["代码", "code"] if c in hot_df.columns), None)
+            if code_col:
+                result["hot_code_set"] = set(str(c).zfill(6) for c in hot_df[code_col])
+                logger.info(f"同花顺热点: {len(result['hot_code_set'])} 只")
+    except Exception as e:
+        logger.debug(f"热点获取失败: {e}")
+
+    # 2. 行业板块排名
+    try:
+        ind_df = get_industry_comparison()
+        if not ind_df.empty and "涨跌幅" in ind_df.columns:
+            # 按涨跌幅排名，计算百分位
+            sorted_df = ind_df.sort_values("涨跌幅", ascending=False)
+            total = len(sorted_df)
+            for rank, (_, row) in enumerate(sorted_df.iterrows()):
+                name = row.get("板块名称", "")
+                result["sector_rank"][name] = rank / max(total - 1, 1)
+            logger.info(f"行业排名: {total} 个板块")
+    except Exception as e:
+        logger.debug(f"行业排名获取失败: {e}")
+
+    # 3. 北向资金流向
+    try:
+        nb_df = get_northbound_realtime()
+        if not nb_df.empty:
+            # 最近一个数据点
+            last_hgt = float(nb_df["hgt_yi"].iloc[-1]) if "hgt_yi" in nb_df.columns else 0
+            last_sgt = float(nb_df["sgt_yi"].iloc[-1]) if "sgt_yi" in nb_df.columns else 0
+            total_flow = last_hgt + last_sgt  # 亿元
+            if total_flow > 30:
+                result["northbound_score"] = 3
+            elif total_flow > 10:
+                result["northbound_score"] = 2
+            elif total_flow > 0:
+                result["northbound_score"] = 1
+            elif total_flow < -30:
+                result["northbound_score"] = -3
+            elif total_flow < -10:
+                result["northbound_score"] = -2
+            logger.info(f"北向资金: {total_flow:.1f} 亿 → score={result['northbound_score']}")
+    except Exception as e:
+        logger.debug(f"北向获取失败: {e}")
+
+    return result
 
 
 def get_northbound_realtime() -> pd.DataFrame:

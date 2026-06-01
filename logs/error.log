@@ -1,0 +1,283 @@
+2026-05-31 17:20:23,266 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:20:23,267 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:20:23,267 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:20:23,271 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:23:36,643 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:23:36,644 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:23:36,644 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:23:36,647 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:34:51,692 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:34:51,692 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:34:51,692 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:34:51,694 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:36:16,317 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:36:16,317 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:36:16,318 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:36:16,322 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:37:33,944 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:37:33,944 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:37:33,944 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:37:33,948 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:38:41,821 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:38:41,822 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:38:41,822 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:38:41,825 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:39:03,364 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:39:03,364 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:39:03,365 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:39:03,367 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:39:12,212 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:39:12,213 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:39:12,213 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:39:12,215 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 17:39:12,860 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:12,860 | default              | WARNING  | market_analyst:_get_company_name:44 | ⚠️ [市场分析师] 无法从统一接口解析股票名称: 600036，尝试降级方案
+2026-05-31 17:39:12,861 | default              | ERROR    | market_analyst:_get_company_name:53 | ❌ [市场分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:12,861 | default              | ERROR    | market_analyst:_get_company_name:55 | ❌ [市场分析师] 所有方案都无法获取股票名称: 600036
+2026-05-31 17:39:14,284 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:24,830 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:24,830 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 600036，尝试降级方案
+2026-05-31 17:39:24,831 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:24,832 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 600036
+2026-05-31 17:39:26,043 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:26,043 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 600036，尝试降级方案
+2026-05-31 17:39:26,044 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:26,044 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 600036
+2026-05-31 17:39:38,551 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:38,552 | analysts.news        | WARNING  | news_analyst:_get_company_name:56 | ⚠️ [DEBUG] 无法从统一接口解析股票名称: 600036
+2026-05-31 17:39:39,651 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:39,651 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 600036，尝试降级方案
+2026-05-31 17:39:39,652 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:39,653 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 600036
+2026-05-31 17:39:40,868 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:40,895 | agents               | WARNING  | db_cache:<module>:29 | ⚠️ pymongo 未安装，MongoDB功能不可用
+2026-05-31 17:39:40,895 | agents               | WARNING  | db_cache:<module>:38 | ⚠️ redis 未安装，Redis功能不可用
+2026-05-31 17:39:40,905 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:41,007 | agents               | ERROR    | optimized_china_data:_estimate_financial_metrics:841 | ❌ 无法获取股票 600036 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-05-31 17:39:41,007 | agents               | WARNING  | optimized_china_data:_generate_fundamentals_report:433 | ⚠️ [基本面分析] 无法获取财务指标: 无法获取股票 600036 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-05-31 17:39:41,007 | agents               | WARNING  | agent_utils:get_stock_fundamentals_unified:1020 | ⚠️ [统一基本面工具] 数据模块 1 包含错误信息
+2026-05-31 17:39:41,009 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:41,009 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 600036，尝试降级方案
+2026-05-31 17:39:41,009 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:41,009 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 600036
+2026-05-31 17:39:49,450 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:49,452 | default              | ERROR    | bull_researcher:_get_company_name:51 | ❌ [多头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:39:49,656 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 17:39:49,656 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 17:40:03,837 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:40:03,838 | default              | ERROR    | bear_researcher:_get_company_name:49 | ❌ [空头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-05-31 17:40:04,035 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 17:40:04,036 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 17:40:22,993 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 17:40:22,994 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 17:40:34,954 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-05-31 17:40:35,080 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 17:40:35,080 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 17:41:08,520 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 17:41:08,520 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 17:57:39,739 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 17:57:39,739 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 17:57:39,740 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 17:57:39,746 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 18:00:16,571 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 18:00:16,571 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 18:00:16,571 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 18:00:16,574 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 18:00:21,018 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:21,022 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:21,032 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:21,042 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:21,052 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:21,061 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:30,818 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 18:00:30,818 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 18:00:30,818 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 18:00:30,820 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 18:00:31,203 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,207 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,215 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,224 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,231 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,240 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:00:31,260 | dataflows            | WARNING  | data_source_manager:_check_available_sources:443 | ⚠️ [数据源配置] 从数据库读取失败: No module named 'motor'，将检查所有已安装的数据源
+2026-05-31 18:00:31,260 | dataflows            | WARNING  | data_source_manager:_get_datasource_configs_from_db:535 | ⚠️ 从数据库读取数据源配置失败: No module named 'motor'
+2026-05-31 18:00:31,260 | dataflows            | WARNING  | data_source_manager:_check_available_sources:478 | ⚠️ Tushare数据源不可用: 库未安装
+2026-05-31 18:00:31,626 | dataflows            | WARNING  | data_source_manager:_check_available_sources:500 | ⚠️ BaoStock数据源不可用: 库未安装
+2026-05-31 18:00:31,627 | agents               | WARNING  | db_cache:<module>:29 | ⚠️ pymongo 未安装，MongoDB功能不可用
+2026-05-31 18:00:31,627 | agents               | WARNING  | db_cache:<module>:38 | ⚠️ redis 未安装，Redis功能不可用
+2026-05-31 18:00:31,629 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:00:31,629 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:00:32,172 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:00:32,228 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f120%2Cf121%2Cf122%2Cf174%2Cf175%2Cf59%2Cf163%2Cf43%2Cf57%2Cf58%2Cf169%2Cf170%2Cf46%2Cf44%2Cf51%2Cf168%2Cf47%2Cf164%2Cf116%2Cf60%2Cf45%2Cf52%2Cf50%2Cf48%2Cf167%2Cf117%2Cf71%2Cf161%2Cf49%2Cf530%2Cf135%2Cf136%2Cf137%2Cf138%2Cf139%2Cf141%2Cf142%2Cf144%2Cf145%2Cf147%2Cf148%2Cf140%2Cf143%2Cf146%2Cf149%2Cf55%2Cf62%2Cf162%2Cf92%2Cf173%2Cf104%2Cf105%2Cf84%2Cf85%2Cf183%2Cf184%2Cf185%2Cf186%2Cf187%2Cf188%2Cf189%2Cf190%2Cf191%2Cf192%2Cf107%2Cf111%2Cf86%2Cf177%2Cf78%2Cf110%2Cf262%2Cf263%2Cf264%2Cf267%2Cf268%2Cf255%2Cf256%2Cf257%2Cf258%2Cf127%2Cf199%2Cf128%2Cf198%2Cf259%2Cf260%2Cf261%2Cf171%2Cf277%2Cf278%2Cf279%2Cf288%2Cf152%2Cf250%2Cf251%2Cf252%2Cf253%2Cf254%2Cf269%2Cf270%2Cf271%2Cf272%2Cf273%2Cf274%2Cf275%2Cf276%2Cf265%2Cf266%2Cf289%2Cf290%2Cf286%2Cf285%2Cf292%2Cf293%2Cf294%2Cf295%2Cf43&secid=0.sh600036 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+2026-05-31 18:00:32,228 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:00:32,228 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:00:34,474 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:00:36,755 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:00:50,790 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:00:50,790 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:00:50,984 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:00:51,189 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:00:51,190 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:00:51,190 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:00:52,392 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:00:52,393 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:00:52,626 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:00:52,860 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:00:52,861 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:00:52,861 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:07,810 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:07,810 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:08,004 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:08,202 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:08,202 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:08,203 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:09,280 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:09,280 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:09,395 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:09,592 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:09,592 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:09,593 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:11,230 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:11,608 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:01:11,631 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:11,631 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:11,806 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:12,072 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:12,073 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:12,073 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:14,389 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:14,779 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:01:14,793 | agents               | WARNING  | optimized_china_data:_parse_akshare_financial_data:1473 | ⚠️ [AKShare-总市值-全部失败] 无可用总市值数据
+2026-05-31 18:01:14,802 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:14,802 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:14,986 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:15,178 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:15,178 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:15,178 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:24,309 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:24,309 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:24,494 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:24,680 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:24,681 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:24,681 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:24,829 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:01:24,830 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:01:42,360 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:01:42,360 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:01:42,608 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:01:43,805 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:01:43,806 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:01:43,806 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:01:43,911 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:01:43,911 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:02:04,557 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:02:04,557 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:02:18,676 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-05-31 18:02:18,774 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:02:18,774 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:02:59,594 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:02:59,594 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:03:26,920 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-05-31 18:03:26,920 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-05-31 18:03:26,920 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-05-31 18:03:26,923 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-05-31 18:03:27,369 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientStartEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,373 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,381 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,390 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,398 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,406 | chromadb.telemetry.product.posthog | ERROR    | posthog:_direct_capture:59 | Failed to send telemetry event ClientCreateCollectionEvent: capture() takes 1 positional argument but 3 were given
+2026-05-31 18:03:27,425 | dataflows            | WARNING  | data_source_manager:_check_available_sources:443 | ⚠️ [数据源配置] 从数据库读取失败: No module named 'motor'，将检查所有已安装的数据源
+2026-05-31 18:03:27,425 | dataflows            | WARNING  | data_source_manager:_get_datasource_configs_from_db:535 | ⚠️ 从数据库读取数据源配置失败: No module named 'motor'
+2026-05-31 18:03:27,425 | dataflows            | WARNING  | data_source_manager:_check_available_sources:478 | ⚠️ Tushare数据源不可用: 库未安装
+2026-05-31 18:03:27,506 | dataflows            | WARNING  | data_source_manager:_check_available_sources:500 | ⚠️ BaoStock数据源不可用: 库未安装
+2026-05-31 18:03:27,506 | agents               | WARNING  | db_cache:<module>:29 | ⚠️ pymongo 未安装，MongoDB功能不可用
+2026-05-31 18:03:27,506 | agents               | WARNING  | db_cache:<module>:38 | ⚠️ redis 未安装，Redis功能不可用
+2026-05-31 18:03:27,507 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:03:27,507 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:03:27,566 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:03:27,612 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?fltt=2&invt=2&fields=f120%2Cf121%2Cf122%2Cf174%2Cf175%2Cf59%2Cf163%2Cf43%2Cf57%2Cf58%2Cf169%2Cf170%2Cf46%2Cf44%2Cf51%2Cf168%2Cf47%2Cf164%2Cf116%2Cf60%2Cf45%2Cf52%2Cf50%2Cf48%2Cf167%2Cf117%2Cf71%2Cf161%2Cf49%2Cf530%2Cf135%2Cf136%2Cf137%2Cf138%2Cf139%2Cf141%2Cf142%2Cf144%2Cf145%2Cf147%2Cf148%2Cf140%2Cf143%2Cf146%2Cf149%2Cf55%2Cf62%2Cf162%2Cf92%2Cf173%2Cf104%2Cf105%2Cf84%2Cf85%2Cf183%2Cf184%2Cf185%2Cf186%2Cf187%2Cf188%2Cf189%2Cf190%2Cf191%2Cf192%2Cf107%2Cf111%2Cf86%2Cf177%2Cf78%2Cf110%2Cf262%2Cf263%2Cf264%2Cf267%2Cf268%2Cf255%2Cf256%2Cf257%2Cf258%2Cf127%2Cf199%2Cf128%2Cf198%2Cf259%2Cf260%2Cf261%2Cf171%2Cf277%2Cf278%2Cf279%2Cf288%2Cf152%2Cf250%2Cf251%2Cf252%2Cf253%2Cf254%2Cf269%2Cf270%2Cf271%2Cf272%2Cf273%2Cf274%2Cf275%2Cf276%2Cf265%2Cf266%2Cf289%2Cf290%2Cf286%2Cf285%2Cf292%2Cf293%2Cf294%2Cf295%2Cf43&secid=0.sh600036 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))
+2026-05-31 18:03:27,612 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:03:27,612 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:03:29,404 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:03:31,953 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:03:47,567 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:03:47,567 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:03:47,611 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:03:47,665 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:03:47,665 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:03:47,665 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:03:48,648 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:03:48,648 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:03:48,690 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:03:48,743 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:03:48,743 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:03:48,743 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:02,581 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:02,582 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:02,655 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:02,735 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:02,736 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:02,736 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:04,371 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:04,371 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:04,445 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:04,547 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:04,547 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:04,547 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:06,299 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:06,525 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:04:06,543 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:06,543 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:06,802 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:06,854 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:06,855 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:06,855 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:08,892 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:09,131 | tradingagents.dataflows.providers.china.akshare | ERROR    | akshare:_get_stock_list_cached:417 | ❌ 获取股票列表失败: Excel file format cannot be determined, you must specify an engine manually.
+2026-05-31 18:04:09,149 | agents               | WARNING  | optimized_china_data:_parse_akshare_financial_data:1473 | ⚠️ [AKShare-总市值-全部失败] 无可用总市值数据
+2026-05-31 18:04:09,159 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:09,159 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:09,394 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:09,442 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:09,442 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:09,443 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:20,144 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:20,144 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:20,196 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:20,252 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:20,252 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:20,252 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:20,392 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:04:20,392 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:04:36,518 | dataflows            | WARNING  | data_source_manager:get_stock_info:1528 | ⚠️ [数据来源: DataSourceCode.AKSHARE] 不支持股票信息获取，尝试降级: 600036
+2026-05-31 18:04:36,518 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1598 | 🔄 DataSourceCode.AKSHARE失败，尝试备用数据源获取股票信息...
+2026-05-31 18:04:36,714 | tradingagents.dataflows.providers.china.akshare | WARNING  | akshare:patched_get:101 | ⚠️ curl_cffi 请求失败，回退到标准 requests: Failed to perform, curl: (56) Connection closed abruptly. See https://curl.se/libcurl/c/libcurl-errors.html first for more details.
+2026-05-31 18:04:36,883 | dataflows            | ERROR    | data_source_manager:_get_akshare_stock_info:1705 | ❌ [股票信息] AKShare获取失败: 600036, 错误: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-31 18:04:36,883 | dataflows            | WARNING  | data_source_manager:_try_fallback_stock_info:1639 | ⚠️ [数据来源: ChinaDataSource.AKSHARE] 返回无效信息
+2026-05-31 18:04:36,883 | dataflows            | ERROR    | data_source_manager:_try_fallback_stock_info:1646 | ❌ 所有数据源都无法获取600036的股票信息
+2026-05-31 18:04:37,069 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:04:37,070 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:04:57,039 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:04:57,039 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:05:10,706 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-05-31 18:05:10,833 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:05:10,833 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-05-31 18:05:48,873 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-05-31 18:05:48,873 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
