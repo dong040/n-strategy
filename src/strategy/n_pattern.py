@@ -18,6 +18,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 
+from .ml_filter import load_model as _load_ml_model, predict_signal as _predict_ml_signal
+
 logger = logging.getLogger(__name__)
 
 
@@ -200,6 +202,8 @@ class NPatternParams:
     high_win_min_volatility_contraction_score: int = 5
     high_win_min_resistance_pct: float = 3.0
     high_win_min_rr: float = 1.5
+    high_win_min_ml_confidence: float = 0.50
+    high_win_require_ml: bool = True
 
 
 @dataclass
@@ -1262,22 +1266,24 @@ def _calc_trading_factors(
 def _factor_strength_bonus(factor_score: int) -> int:
     """把原始因子分映射为强度加减分。
 
-    22因子总分范围 ~-110~140，最佳击球区 15~50。
+    22因子总分范围约 -110~140。
+    旧版本对超高分再次扣分，容易把本来已经通过多因子共振的强信号打回去。
+    这里改成更平滑、单调的奖励曲线。
     """
     if factor_score < 0:
         return -15
-    if factor_score < 15:
+    if factor_score < 10:
         return -6
+    if factor_score < 25:
+        return 4
     if factor_score <= 50:
-        return 10
+        return 9
     if factor_score <= 80:
-        return 5
-    return -4
+        return 12
+    return 10
 
 
 # ── XGBoost ML 模型预测 ──
-
-_ml_model_cache = None
 
 ML_FEATURE_COLS = [
     "pullback_volume_score", "turnover_crowding_score", "relative_strength_score",
@@ -1291,27 +1297,12 @@ ML_FEATURE_COLS = [
 
 
 def _predict_ml_win_prob(factors: dict) -> float:
-    """使用 XGBoost 模型预测信号胜率。模型不存在时返回 0.5。"""
-    global _ml_model_cache
+    """使用 ML/Ensemble 模型预测信号胜率。模型不存在时返回 0.5。"""
     try:
-        if _ml_model_cache is None:
-            import os, pickle
-            model_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-                os.path.abspath(__file__)))), 'data', 'xgboost_n_pattern.pkl')
-            if not os.path.exists(model_path):
-                return 0.5
-            with open(model_path, 'rb') as f:
-                _ml_model_cache = pickle.load(f)
-
-        model = _ml_model_cache['model']
-        feature_cols = _ml_model_cache.get('feature_cols', ML_FEATURE_COLS)
-
-        features = []
-        for col in feature_cols:
-            features.append(factors.get(col, 0))
-        import numpy as np
-        X = np.array([features])
-        prob = float(model.predict_proba(X)[0, 1])
+        model_data = _load_ml_model()
+        if model_data is None:
+            return 0.5
+        prob, _ = _predict_ml_signal(model_data, factors, strength=0)
         return prob
     except Exception:
         return 0.5
@@ -1332,6 +1323,13 @@ def _passes_high_win_filter(signal_data: dict, params: NPatternParams) -> bool:
     nearest_resistance = signal_data.get('nearest_resistance')
     if nearest_resistance and 0 < resistance_pct < params.high_win_min_resistance_pct:
         return False
+
+    model_data = _load_ml_model()
+    if params.high_win_require_ml and model_data is not None:
+        model_threshold = float(model_data.get('threshold', 0.5))
+        min_ml_conf = max(params.high_win_min_ml_confidence, model_threshold)
+        if signal_data.get('ml_confidence', 0.5) < min_ml_conf:
+            return False
 
     # 输家清单：因子区分度显示4个反效特征，≥3个命中则排除
     loser_flags = 0
