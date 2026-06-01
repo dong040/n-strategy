@@ -1,4 +1,1 @@
-# N-strategy 项目配置
-
-## 权限
-- 默认允许所有 Bash 命令和文件读写，不需要手动确认
+@/var/folders/ps/vjbc6h4s5hqd164w3lb62grh0000gn/T/nstrategy-gh-YXCkaq/CLAUDE.md
