@@ -7,13 +7,19 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.venv/
 
 # 本地数据
 data/*.db
 data/*.pkl
 data/*.csv
+data/backtest_results_*.json
 data/bt_cache/
 data/screenshots/
+
+# 日志与评估产物
+logs/
+eval_results/
 
 # IDE
 .idea/
