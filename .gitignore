@@ -1,1 +1,17 @@
-@/var/folders/ps/vjbc6h4s5hqd164w3lb62grh0000gn/T/nstrategy-docs-LLXfYU/.gitignore
+# Python
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local data cache
+data/cache/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
