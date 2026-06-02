@@ -68,8 +68,14 @@ class Trade:
     intraday_reversal_score: int = 0
     volume_climax_score: int = 0
     sector_relative_score: int = 0
+    adx_trend_score: int = 0
+    obv_accumulation_score: int = 0
+    cmf_score: int = 0
+    gap_support_score: int = 0
     ml_confidence: float = 0.0
     ml_confidence_score: int = 0
+    sequence_confidence: float = 0.0
+    sequence_score: int = 0
 
 
 @dataclass
@@ -121,8 +127,14 @@ def _factor_kwargs(source: dict) -> dict:
         "intraday_reversal_score",
         "volume_climax_score",
         "sector_relative_score",
+        "adx_trend_score",
+        "obv_accumulation_score",
+        "cmf_score",
+        "gap_support_score",
         "ml_confidence",
         "ml_confidence_score",
+        "sequence_confidence",
+        "sequence_score",
     ]
     return {k: source.get(k, 0) for k in keys}
 

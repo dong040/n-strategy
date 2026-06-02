@@ -18,14 +18,39 @@ from .data_fetcher import get_live_factor_data, get_stock_industry_map
 logger = logging.getLogger(__name__)
 
 
+def _rank_score(sig: NSignal) -> float:
+    seq_prob = getattr(sig, "sequence_confidence", 0.5)
+    ml_prob = getattr(sig, "ml_confidence", 0.5)
+    rr_ratio = max(getattr(sig, "rr_ratio", 0.0), 0.0)
+    return (
+        sig.strength * (0.35 + ml_prob + 0.45 * seq_prob)
+        + getattr(sig, "factor_score", 0) * 0.35
+        + min(rr_ratio, 5.0) * 8.0
+    )
+
+
+def _sort_signals(signals: list[NSignal]) -> list[NSignal]:
+    return sorted(signals, key=_rank_score, reverse=True)
+
+
 @dataclass
 class ScanConfig:
-    top_n: int = 3               # 每日输出前 N 只 (受 max_positions 约束)
+    top_n: int = 3               # 兼容旧配置，等价于 watchlist_top_n
     markets: list = field(default_factory=lambda: ["sh", "sz"])
     exclude_st: bool = True
     exclude_suspend: bool = True
     main_board_only: bool = True
     industry_filter: list = field(default_factory=list)
+    enable_tradingagents: bool = False
+    execution_top_n: int = 3
+    watchlist_top_n: int = 3
+    watchlist_min_ml_confidence: float = 0.30
+    watchlist_min_sequence_confidence: float = 0.40
+    watchlist_min_rr: float = 1.2
+    watchlist_min_strength: int = 80
+    watchlist_min_factor_score: int = 0
+    watchlist_min_close_position_score: int = -10
+    watchlist_min_volatility_contraction_score: int = 0
 
 
 @dataclass
@@ -33,6 +58,8 @@ class ScanResult:
     date: str
     total_scanned: int
     signals: list
+    execution_signals: list = field(default_factory=list)
+    watchlist_signals: list = field(default_factory=list)
     elapsed_seconds: float = 0
 
 
@@ -80,6 +107,8 @@ def run_daily_scan(
         params = NPatternParams()
     if scan_config is None:
         scan_config = ScanConfig()
+    if not getattr(scan_config, "watchlist_top_n", 0):
+        scan_config.watchlist_top_n = scan_config.top_n
 
     start_time = time.time()
     today = datetime.now().strftime("%Y-%m-%d")
@@ -120,11 +149,12 @@ def run_daily_scan(
     logger.info(f"3/4 扫描形态 ({len(codes)} 只)...")
     all_signals = []
     fallback_signals = []
+    fallback_relaxed_raw = []
     errors = 0
     report_interval = max(1, len(codes) // 5)
     relaxed_params = replace(params, high_win_mode=False) if params.high_win_mode else params
 
-    def _enrich_and_filter(signals: list, df, code: str, tier: str) -> list:
+    def _enrich_and_filter(signals: list, df, code: str, tier: str, layer: str) -> list:
         if not signals:
             return []
         last_close = df['close'].values[-1]
@@ -137,9 +167,11 @@ def run_daily_scan(
             sig.fundamental_score = fin['score']
             sig.details = dict(sig.details or {})
             sig.details["selection_tier"] = tier
+            sig.details["strategy_layer"] = layer
             if fin['is_garbage_profitable']:
                 continue
             sig.strength += fin['score']
+            sig.details["rank_score"] = round(_rank_score(sig), 2)
             out.append(sig)
         return out
 
@@ -153,49 +185,92 @@ def run_daily_scan(
                 continue
 
             signals = scan_stock(code, names.get(code, ''), df, params, market_pct, live_data=live_data)
-            all_signals.extend(_enrich_and_filter(signals, df, code, "high_win"))
+            all_signals.extend(_enrich_and_filter(signals, df, code, "high_win", "execution"))
 
             # 高胜率模式下保留一份宽松候选池，只有严格池不足时才兜底使用。
             if params.high_win_mode and not signals:
-                relaxed = scan_stock(
-                    code, names.get(code, ''), df, relaxed_params, market_pct, live_data=live_data,
-                )
-                fallback_signals.extend(_enrich_and_filter(relaxed, df, code, "fallback"))
+                relaxed = scan_stock(code, names.get(code, ''), df, relaxed_params, market_pct, live_data=live_data)
+                relaxed = _enrich_and_filter(relaxed, df, code, "fallback", "watchlist")
+                fallback_relaxed_raw.extend(relaxed)
+                for sig in relaxed:
+                    if sig.ml_confidence < scan_config.watchlist_min_ml_confidence:
+                        continue
+                    if getattr(sig, "sequence_confidence", 0.5) < scan_config.watchlist_min_sequence_confidence:
+                        continue
+                    if sig.rr_ratio < scan_config.watchlist_min_rr:
+                        continue
+                    if sig.strength < scan_config.watchlist_min_strength:
+                        continue
+                    if getattr(sig, "factor_score", 0) < scan_config.watchlist_min_factor_score:
+                        continue
+                    if getattr(sig, "close_position_score", 0) < scan_config.watchlist_min_close_position_score:
+                        continue
+                    if getattr(sig, "volatility_contraction_score", 0) < scan_config.watchlist_min_volatility_contraction_score:
+                        continue
+                    fallback_signals.append(sig)
         except Exception:
             errors += 1
             continue
 
     # 4. 排序
-    all_signals.sort(key=lambda s: s.strength, reverse=True)
-    fallback_signals.sort(key=lambda s: s.strength, reverse=True)
+    all_signals = _sort_signals(all_signals)
+    fallback_signals = _sort_signals(fallback_signals)
+    fallback_relaxed_raw = _sort_signals(fallback_relaxed_raw)
 
-    # 4.5 高胜率兜底：严格信号不足 top_n 时，才用宽松候选补齐并标注 selection_tier=fallback。
-    if params.high_win_mode and len(all_signals) < scan_config.top_n:
-        need = scan_config.top_n - len(all_signals)
-        selected_codes = {s.code for s in all_signals}
+    execution_signals = all_signals[:scan_config.execution_top_n]
+
+    watchlist_signals = execution_signals.copy()
+    selected_codes = {s.code for s in watchlist_signals}
+    if len(watchlist_signals) < scan_config.watchlist_top_n:
+        need = scan_config.watchlist_top_n - len(watchlist_signals)
         fill = [s for s in fallback_signals if s.code not in selected_codes][:need]
-        all_signals = all_signals + fill
-        logger.info(f"高胜率信号不足 ({len(all_signals) - len(fill)}/{scan_config.top_n})，兜底补齐 {len(fill)} 只")
+        watchlist_signals.extend(fill)
+        selected_codes.update(s.code for s in fill)
+        logger.info(
+            f"高胜率信号不足 ({len(execution_signals)}/{scan_config.watchlist_top_n})，兜底补齐 {len(fill)} 只"
+        )
+
+    if len(watchlist_signals) < scan_config.watchlist_top_n:
+        need = scan_config.watchlist_top_n - len(watchlist_signals)
+        loose_fill = []
+        for sig in fallback_relaxed_raw:
+            if sig.code in selected_codes:
+                continue
+            sig.details = dict(sig.details or {})
+            sig.details["selection_tier"] = "fallback_loose"
+            loose_fill.append(sig)
+            if len(loose_fill) >= need:
+                break
+        watchlist_signals.extend(loose_fill)
+        if loose_fill:
+            logger.info(f"严格观察层仍不足，宽松候选再补齐 {len(loose_fill)} 只")
 
     # 5. TradingAgents 多智能体二次打分 (Top N)
     ta_count = 0
-    try:
-        from .tradingagents_scorer import score_top_candidates
-        top_n_ta = min(scan_config.top_n, 5)
-        score_top_candidates(all_signals[:top_n_ta], top_n=top_n_ta)
-        ta_count = top_n_ta
-        logger.info(f"TradingAgents 二次打分完成 ({ta_count} 只)")
-    except ImportError:
-        logger.debug("TradingAgents 未安装，跳过二次打分")
-    except Exception as e:
-        logger.warning(f"TradingAgents 二次打分失败: {e}")
+    if scan_config.enable_tradingagents:
+        try:
+            from .tradingagents_scorer import score_top_candidates
+            top_n_ta = min(scan_config.watchlist_top_n, 5)
+            score_top_candidates(watchlist_signals[:top_n_ta], top_n=top_n_ta)
+            ta_count = top_n_ta
+            logger.info(f"TradingAgents 二次打分完成 ({ta_count} 只)")
+        except ImportError:
+            logger.debug("TradingAgents 未安装，跳过二次打分")
+        except Exception as e:
+            logger.warning(f"TradingAgents 二次打分失败: {e}")
+    else:
+        logger.info("TradingAgents 二次打分已关闭")
 
     elapsed = time.time() - start_time
-    logger.info(f"4/4 完成: {len(all_signals)} 信号, {errors} 错误, 耗时 {elapsed:.0f}s")
+    logger.info(
+        f"4/4 完成: 执行层{len(execution_signals)} 只 / 观察层{len(watchlist_signals)} 只, {errors} 错误, 耗时 {elapsed:.0f}s"
+    )
 
     return ScanResult(
         date=today,
         total_scanned=len(codes),
-        signals=all_signals[:scan_config.top_n],
+        signals=watchlist_signals[:scan_config.watchlist_top_n],
+        execution_signals=execution_signals[:scan_config.execution_top_n],
+        watchlist_signals=watchlist_signals[:scan_config.watchlist_top_n],
         elapsed_seconds=round(elapsed, 1),
     )

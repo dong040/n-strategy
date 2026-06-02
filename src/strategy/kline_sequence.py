@@ -25,6 +25,8 @@ class SequenceConfig:
     lr: float = 1e-3
     epochs: int = 35
     batch_size: int = 64
+    min_samples: int = 8
+    balance_classes: bool = True
 
 
 def build_kline_tensor(
@@ -127,10 +129,10 @@ def train_sequence_model(
     X_seq = np.asarray(X_seq, dtype=np.float32)
     y = np.asarray(y, dtype=np.float32)
 
-    if len(X_seq) < 40:
-        raise ValueError("Sequence dataset too small; need at least 40 samples")
+    if len(X_seq) < config.min_samples:
+        raise ValueError(f"Sequence dataset too small; need at least {config.min_samples} samples")
 
-    split = max(int(len(X_seq) * 0.75), len(X_seq) - 20)
+    split = max(int(len(X_seq) * 0.75), len(X_seq) - max(4, len(X_seq) // 4))
     X_train, X_val = X_seq[:split], X_seq[split:]
     y_train, y_val = y[:split], y[split:]
 
@@ -141,7 +143,12 @@ def train_sequence_model(
         dropout=config.dropout,
     )
     optimizer = torch.optim.Adam(model.parameters(), lr=config.lr)
-    loss_fn = nn.BCEWithLogitsLoss()
+    pos_weight = None
+    if config.balance_classes:
+        pos_cnt = float(max(np.sum(y_train == 1), 1.0))
+        neg_cnt = float(max(np.sum(y_train == 0), 1.0))
+        pos_weight = torch.tensor([neg_cnt / pos_cnt], dtype=torch.float32)
+    loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
 
     train_loader = DataLoader(
         TensorDataset(torch.from_numpy(X_train), torch.from_numpy(y_train)),
@@ -171,6 +178,11 @@ def train_sequence_model(
             val_prob = torch.sigmoid(val_logits).numpy()
             val_pred = (val_prob >= 0.5).astype(np.float32)
             val_acc = float((val_pred == y_val).mean()) if len(y_val) else 0.0
+            if len(np.unique(y_val)) >= 2:
+                from sklearn.metrics import roc_auc_score
+                val_auc = float(roc_auc_score(y_val, val_prob))
+            else:
+                val_auc = 0.0
 
         history.append(
             {
@@ -178,6 +190,7 @@ def train_sequence_model(
                 "train_loss": round(float(np.mean(train_losses)), 4),
                 "val_loss": round(val_loss, 4),
                 "val_acc": round(val_acc, 4),
+                "val_auc": round(val_auc, 4),
             }
         )
         if val_loss < best_val_loss:
@@ -194,6 +207,7 @@ def train_sequence_model(
         "state_dict": {k: v.cpu() for k, v in model.state_dict().items()},
         "history": history,
         "input_dim": X_seq.shape[2],
+        "train_positive_rate": float(np.mean(y_train)),
     }
 
 

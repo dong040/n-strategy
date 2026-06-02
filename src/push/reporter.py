@@ -34,29 +34,46 @@ def format_signal_line(s: NSignal, idx: int) -> str:
     else:
         warn = ""
     tier = (s.details or {}).get("selection_tier", "high_win")
-    tier_label = "兜底" if tier == "fallback" else "高胜率"
+    if tier == "fallback":
+        tier_label = "兜底"
+    elif tier == "fallback_loose":
+        tier_label = "宽松兜底"
+    else:
+        tier_label = "高胜率"
+    rank_score = (s.details or {}).get("rank_score", 0)
 
     return (
         f"{idx}. {emoji} **{s.name}**({s.code}) "
         f"买入**{s.entry_price}** | {support} | {n_type} | {tier_label} | 强**{s.strength}**{resistance}{warn}"
-        f" | 因子{s.factor_score:+d}"
+        f" | 因子{s.factor_score:+d} | ML {s.ml_confidence:.2f} | SEQ {getattr(s, 'sequence_confidence', 0.0):.2f} | Rank {rank_score}"
     )
 
 
 def build_report(result: ScanResult) -> str:
     """根据扫描结果构建精简 Markdown 报告"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    execution = getattr(result, "execution_signals", []) or []
+    watchlist = getattr(result, "watchlist_signals", []) or result.signals
     lines = [
         f"## N字战法 {result.date}",
-        f"扫描 {result.total_scanned} 只 → {len(result.signals)} 信号 | {result.elapsed_seconds}s",
+        f"扫描 {result.total_scanned} 只 | 执行层 {len(execution)} 只 | 观察层 {len(watchlist)} 只 | {result.elapsed_seconds}s",
         "",
     ]
 
-    for i, s in enumerate(result.signals, 1):
-        lines.append(format_signal_line(s, i))
+    lines.append("### 执行层")
+    if execution:
+        for i, s in enumerate(execution, 1):
+            lines.append(format_signal_line(s, i))
+    else:
+        lines.append("> 今日无严格高胜率信号")
 
-    if not result.signals:
-        lines.append("> 今日无符合条件的 N 字信号")
+    lines.append("")
+    lines.append("### 观察层")
+    if watchlist:
+        for i, s in enumerate(watchlist, 1):
+            lines.append(format_signal_line(s, i))
+    else:
+        lines.append("> 今日无候选信号")
 
     lines.append("")
     lines.append("---")
@@ -68,20 +85,47 @@ def build_report(result: ScanResult) -> str:
 def build_text_report(result: ScanResult) -> str:
     """纯文本版本"""
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
+    execution = getattr(result, "execution_signals", []) or []
+    watchlist = getattr(result, "watchlist_signals", []) or result.signals
     lines = [
         f"N字战法 每日扫描 {result.date}",
-        f"扫描 {result.total_scanned} 只 → 信号 {len(result.signals)} 个 | 耗时 {result.elapsed_seconds}s",
+        f"扫描 {result.total_scanned} 只 | 执行层 {len(execution)} 个 | 观察层 {len(watchlist)} 个 | 耗时 {result.elapsed_seconds}s",
         "",
     ]
 
-    for i, s in enumerate(result.signals, 1):
+    lines.append("[执行层]")
+    for i, s in enumerate(execution, 1):
         emoji = _strength_emoji(s.strength)
         tier = (s.details or {}).get("selection_tier", "high_win")
-        tier_label = "兜底" if tier == "fallback" else "高胜率"
+        if tier == "fallback":
+            tier_label = "兜底"
+        elif tier == "fallback_loose":
+            tier_label = "宽松兜底"
+        else:
+            tier_label = "高胜率"
         lines.append(
             f"{i}. {emoji} {s.name}({s.code}) "
             f"买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} "
-            f"强{s.strength} {tier_label} 费波{s.fib_level}"
+            f"强{s.strength} {tier_label} 费波{s.fib_level} ML{s.ml_confidence:.2f} SEQ{getattr(s, 'sequence_confidence', 0.0):.2f}"
+        )
+    if not execution:
+        lines.append("无严格高胜率信号")
+
+    lines.append("")
+    lines.append("[观察层]")
+    for i, s in enumerate(watchlist, 1):
+        emoji = _strength_emoji(s.strength)
+        tier = (s.details or {}).get("selection_tier", "high_win")
+        if tier == "fallback":
+            tier_label = "兜底"
+        elif tier == "fallback_loose":
+            tier_label = "宽松兜底"
+        else:
+            tier_label = "高胜率"
+        lines.append(
+            f"{i}. {emoji} {s.name}({s.code}) "
+            f"买入{s.entry_price} 止损{s.stop_loss} 目标{s.target_price} "
+            f"强{s.strength} {tier_label} 费波{s.fib_level} ML{s.ml_confidence:.2f} SEQ{getattr(s, 'sequence_confidence', 0.0):.2f}"
         )
     return "\n".join(lines)
 
@@ -129,7 +173,7 @@ def push_via_webhook(results: list, top_n: int = 15) -> bool:
         lines.append(
             f"{i+1}. {emoji} **{r.name}**({r.code}) "
             f"买入**{r.entry_price}** | {support} | {n_type} | 强**{r.strength}**"
-            f" | 因子{r.factor_score:+d}{resistance}{warn}"
+            f" | 因子{r.factor_score:+d} | ML {r.ml_confidence:.2f} | SEQ {getattr(r, 'sequence_confidence', 0.0):.2f}{resistance}{warn}"
         )
 
     lines.append("")
@@ -148,4 +192,16 @@ def push_simple_message(content: str, chat_id: str = None) -> bool:
         return True
     except Exception as e:
         logger.error(f"推送失败: {e}")
+        return False
+
+
+def push_notification(title: str, content: str, use_card: bool = True) -> bool:
+    """发送通用通知，可用于任务完成、回测结束等场景。"""
+    try:
+        if use_card:
+            return send_interactive_via_webhook(title, content)
+        text = f"{title}\n{content}"
+        return send_text_to_chat(text)
+    except Exception as e:
+        logger.error(f"通知推送失败: {e}")
         return False

@@ -12,15 +12,27 @@ N字结构定义：
 """
 
 import logging
+import os
 from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 
+from .kline_sequence import (
+    build_kline_tensor,
+    load_sequence_model as _load_sequence_model,
+    predict_sequence_prob as _predict_sequence_prob,
+)
 from .ml_filter import load_model as _load_ml_model, predict_signal as _predict_ml_signal
 
 logger = logging.getLogger(__name__)
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+SEQUENCE_MODEL_CANDIDATES = [
+    os.path.join(PROJECT_ROOT, "data", "kline_sequence_model_tradefactors.pt"),
+    os.path.join(PROJECT_ROOT, "data", "kline_sequence_model.pt"),
+]
+_SEQUENCE_MODEL_CACHE = None
 
 
 # ====== 技术指标辅助函数（与 TradingAgents 同口径） ======
@@ -159,6 +171,92 @@ def _calc_mfi(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray,
     return mfi
 
 
+def _calc_adx(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, n: int = 14) -> np.ndarray:
+    """Average Directional Index."""
+    highs = np.asarray(highs, dtype=float)
+    lows = np.asarray(lows, dtype=float)
+    closes = np.asarray(closes, dtype=float)
+    length = len(closes)
+    adx = np.full(length, np.nan)
+    if length < n + 2:
+        return adx
+
+    tr = np.zeros(length)
+    plus_dm = np.zeros(length)
+    minus_dm = np.zeros(length)
+    for i in range(1, length):
+        up_move = highs[i] - highs[i - 1]
+        down_move = lows[i - 1] - lows[i]
+        tr[i] = max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]), abs(lows[i] - closes[i - 1]))
+        plus_dm[i] = up_move if up_move > down_move and up_move > 0 else 0.0
+        minus_dm[i] = down_move if down_move > up_move and down_move > 0 else 0.0
+
+    atr = np.full(length, np.nan)
+    plus_di = np.full(length, np.nan)
+    minus_di = np.full(length, np.nan)
+    dx = np.full(length, np.nan)
+    atr[n] = np.sum(tr[1:n + 1])
+    plus_sum = np.sum(plus_dm[1:n + 1])
+    minus_sum = np.sum(minus_dm[1:n + 1])
+
+    for i in range(n, length):
+        if i > n:
+            atr[i] = atr[i - 1] - atr[i - 1] / n + tr[i]
+            plus_sum = plus_sum - plus_sum / n + plus_dm[i]
+            minus_sum = minus_sum - minus_sum / n + minus_dm[i]
+        if atr[i] > 0:
+            plus_di[i] = 100 * plus_sum / atr[i]
+            minus_di[i] = 100 * minus_sum / atr[i]
+            denom = plus_di[i] + minus_di[i]
+            if denom > 0:
+                dx[i] = 100 * abs(plus_di[i] - minus_di[i]) / denom
+
+    valid_dx = dx[n:n * 2]
+    valid_dx = valid_dx[np.isfinite(valid_dx)]
+    if len(valid_dx) == 0:
+        return adx
+    first_idx = n * 2 - 1
+    if first_idx < length:
+        adx[first_idx] = np.mean(valid_dx)
+        for i in range(first_idx + 1, length):
+            if np.isfinite(dx[i]) and np.isfinite(adx[i - 1]):
+                adx[i] = ((adx[i - 1] * (n - 1)) + dx[i]) / n
+    return adx
+
+
+def _calc_obv(closes: np.ndarray, vols: np.ndarray) -> np.ndarray:
+    closes = np.asarray(closes, dtype=float)
+    vols = np.asarray(vols, dtype=float)
+    obv = np.zeros(len(closes), dtype=float)
+    for i in range(1, len(closes)):
+        if closes[i] > closes[i - 1]:
+            obv[i] = obv[i - 1] + vols[i]
+        elif closes[i] < closes[i - 1]:
+            obv[i] = obv[i - 1] - vols[i]
+        else:
+            obv[i] = obv[i - 1]
+    return obv
+
+
+def _calc_cmf(highs: np.ndarray, lows: np.ndarray, closes: np.ndarray, vols: np.ndarray, n: int = 20) -> np.ndarray:
+    highs = np.asarray(highs, dtype=float)
+    lows = np.asarray(lows, dtype=float)
+    closes = np.asarray(closes, dtype=float)
+    vols = np.asarray(vols, dtype=float)
+    length = len(closes)
+    out = np.full(length, np.nan)
+    mfv = np.zeros(length, dtype=float)
+    for i in range(length):
+        hl = highs[i] - lows[i]
+        mult = ((closes[i] - lows[i]) - (highs[i] - closes[i])) / hl if hl > 0 else 0.0
+        mfv[i] = mult * vols[i]
+    for i in range(n - 1, length):
+        vol_sum = np.sum(vols[i - n + 1:i + 1])
+        if vol_sum > 0:
+            out[i] = np.sum(mfv[i - n + 1:i + 1]) / vol_sum
+    return out
+
+
 # ====== 参数与信号 ======
 
 
@@ -198,8 +296,11 @@ class NPatternParams:
     min_turnover_wan: float = 5000
     enable_trading_factors: bool = True
     high_win_mode: bool = True
+    high_win_min_strength: int = 85
     high_win_min_close_position_score: int = 5
     high_win_min_volatility_contraction_score: int = 5
+    high_win_min_sequence_confidence: float = 0.47
+    high_win_min_factor_score: int = 0
     high_win_min_resistance_pct: float = 3.0
     high_win_min_rr: float = 1.5
     high_win_min_ml_confidence: float = 0.50
@@ -278,7 +379,13 @@ class NSignal:
     intraday_reversal_score: int = 0
     volume_climax_score: int = 0
     sector_relative_score: int = 0
+    adx_trend_score: int = 0
+    obv_accumulation_score: int = 0
+    cmf_score: int = 0
+    gap_support_score: int = 0
     ml_confidence: float = 0.0       # XGBoost 模型预测胜率
+    sequence_confidence: float = 0.0
+    sequence_score: int = 0
     # Batch 2: TradingAgents LLM 打分
     tradingagents_confidence: float = 0.0
     tradingagents_action: str = ""
@@ -475,8 +582,14 @@ def _calc_trading_factors(
         "intraday_reversal_score": 0,
         "volume_climax_score": 0,
         "sector_relative_score": 0,
+        "adx_trend_score": 0,
+        "obv_accumulation_score": 0,
+        "cmf_score": 0,
+        "gap_support_score": 0,
         "ml_confidence": 0.0,
         "ml_confidence_score": 0,
+        "sequence_confidence": 0.0,
+        "sequence_score": 0,
         "factor_score": 0,
         "factor_details": {},
     }
@@ -1174,7 +1287,66 @@ def _calc_trading_factors(
             sector_score -= 2
     factors["sector_relative_score"] = _clip_score(sector_score, -8, 10)
 
-    # ── 因子23: XGBoost ML 预测胜率 (ml_confidence) ──
+    # ── 因子23: ADX 趋势强度 (adx_trend_score) ──
+    adx_arr = _calc_adx(highs, lows, closes)
+    adx_score = 0
+    if len(adx_arr) and np.isfinite(adx_arr[-1]):
+        adx_now = float(adx_arr[-1])
+        if 18 <= adx_now <= 38:
+            adx_score += 6
+        elif 38 < adx_now <= 55:
+            adx_score += 2
+        elif adx_now < 12:
+            adx_score -= 6
+        elif adx_now > 60:
+            adx_score -= 4
+    factors["adx_trend_score"] = _clip_score(adx_score, -8, 8)
+
+    # ── 因子24: OBV 吸筹 (obv_accumulation_score) ──
+    obv_arr = _calc_obv(closes, vols)
+    obv_score = 0
+    if len(obv_arr) >= 20:
+        obv5 = obv_arr[-1] - obv_arr[-6]
+        obv20 = obv_arr[-1] - obv_arr[-21]
+        if obv20 > 0:
+            obv_score += 4
+        elif obv20 < 0:
+            obv_score -= 3
+        if obv5 > 0:
+            obv_score += 4
+        elif obv5 < 0:
+            obv_score -= 4
+    factors["obv_accumulation_score"] = _clip_score(obv_score, -8, 8)
+
+    # ── 因子25: CMF 资金流 (cmf_score) ──
+    cmf_arr = _calc_cmf(highs, lows, closes, vols)
+    cmf_score = 0
+    if len(cmf_arr) and np.isfinite(cmf_arr[-1]):
+        cmf_now = float(cmf_arr[-1])
+        if cmf_now > 0.10:
+            cmf_score += 6
+        elif cmf_now > 0:
+            cmf_score += 3
+        elif cmf_now < -0.12:
+            cmf_score -= 6
+        elif cmf_now < -0.03:
+            cmf_score -= 3
+    factors["cmf_score"] = _clip_score(cmf_score, -8, 8)
+
+    # ── 因子26: 缺口支撑 (gap_support_score) ──
+    gap_score = 0
+    for i in range(max(1, n - 15), n):
+        prev_high = highs[i - 1]
+        prev_low = lows[i - 1]
+        if lows[i] > prev_high * 1.01:
+            gap_floor = prev_high
+            if closes[-1] >= gap_floor * 0.98:
+                gap_score += 4
+        elif highs[i] < prev_low * 0.99:
+            gap_score -= 3
+    factors["gap_support_score"] = _clip_score(gap_score, -6, 8)
+
+    # ── 因子27: XGBoost ML 预测胜率 (ml_confidence) ──
     ml_prob = _predict_ml_win_prob(factors)
     factors["ml_confidence"] = round(ml_prob, 3)
     if ml_prob >= 0.65:
@@ -1190,6 +1362,23 @@ def _calc_trading_factors(
     else:
         ml_score = -15
     factors["ml_confidence_score"] = ml_score
+
+    # ── 因子28: K线序列模型胜率 (sequence_confidence) ──
+    seq_prob = _predict_sequence_win_prob(opens, highs, lows, closes, vols)
+    factors["sequence_confidence"] = round(seq_prob, 3)
+    if seq_prob >= 0.65:
+        seq_score = 8
+    elif seq_prob >= 0.58:
+        seq_score = 5
+    elif seq_prob >= 0.52:
+        seq_score = 2
+    elif seq_prob <= 0.35:
+        seq_score = -6
+    elif seq_prob <= 0.42:
+        seq_score = -3
+    else:
+        seq_score = 0
+    factors["sequence_score"] = seq_score
 
     factor_score = (
         factors["pullback_volume_score"]
@@ -1214,7 +1403,12 @@ def _calc_trading_factors(
         + round(factors["intraday_reversal_score"] * 0.6)
         + round(factors["volume_climax_score"] * 0.5)
         + round(factors["sector_relative_score"] * 0.4)
+        + round(factors["adx_trend_score"] * 0.5)
+        + round(factors["obv_accumulation_score"] * 0.5)
+        + round(factors["cmf_score"] * 0.5)
+        + round(factors["gap_support_score"] * 0.4)
         + round(factors.get("ml_confidence_score", 0) * 0.8)
+        + round(factors.get("sequence_score", 0) * 0.5)
     )
     factors["factor_score"] = _clip_score(factor_score, -95, 118)
     factors["factor_details"] = {
@@ -1255,6 +1449,12 @@ def _calc_trading_factors(
         "intraday_reversal_score": factors["intraday_reversal_score"],
         "volume_climax_score": factors["volume_climax_score"],
         "sector_relative_score": factors["sector_relative_score"],
+        "adx_trend_score": factors["adx_trend_score"],
+        "obv_accumulation_score": factors["obv_accumulation_score"],
+        "cmf_score": factors["cmf_score"],
+        "gap_support_score": factors["gap_support_score"],
+        "sequence_confidence": factors["sequence_confidence"],
+        "sequence_score": factors["sequence_score"],
         "rsi_now": round(float(_calc_rsi(closes, 14)[-1]), 1) if n >= 15 else 0,
         "macd_dif": round(float(dif[-1]), 4) if n >= 30 and not np.isnan(dif[-1]) else 0,
         "kdj_j": round(float(kdj_j[-1]), 1) if n >= 9 and not np.isnan(kdj_j[-1]) else 0,
@@ -1293,6 +1493,7 @@ ML_FEATURE_COLS = [
     "macd_signal_score", "ma_alignment_score", "boll_squeeze_score",
     "kdj_oversold_score", "mfi_score", "shadow_quality_score", "pullback_speed_score",
     "intraday_reversal_score", "volume_climax_score", "sector_relative_score",
+    "adx_trend_score", "obv_accumulation_score", "cmf_score", "gap_support_score",
 ]
 
 
@@ -1308,13 +1509,55 @@ def _predict_ml_win_prob(factors: dict) -> float:
         return 0.5
 
 
+def _get_sequence_model():
+    global _SEQUENCE_MODEL_CACHE
+    if _SEQUENCE_MODEL_CACHE is not None:
+        return _SEQUENCE_MODEL_CACHE
+    for path in SEQUENCE_MODEL_CANDIDATES:
+        if os.path.exists(path):
+            try:
+                _SEQUENCE_MODEL_CACHE = _load_sequence_model(path)
+                return _SEQUENCE_MODEL_CACHE
+            except Exception:
+                logger.debug("load sequence model failed: %s", path, exc_info=True)
+    _SEQUENCE_MODEL_CACHE = False
+    return None
+
+
+def _predict_sequence_win_prob(
+    opens: np.ndarray,
+    highs: np.ndarray,
+    lows: np.ndarray,
+    closes: np.ndarray,
+    vols: np.ndarray,
+) -> float:
+    model = _get_sequence_model()
+    if not model:
+        return 0.5
+    try:
+        window = int(model.get("config", {}).get("window", 30))
+        seq = build_kline_tensor(opens, highs, lows, closes, vols, end_idx=len(closes) - 1, window=window)
+        if seq is None:
+            return 0.5
+        return float(_predict_sequence_prob(model, seq))
+    except Exception:
+        logger.debug("sequence inference failed", exc_info=True)
+        return 0.5
+
+
 def _passes_high_win_filter(signal_data: dict, params: NPatternParams) -> bool:
     """高胜率模式：只保留收盘强、波动缩、空间足的回踩信号。"""
     if not params.high_win_mode:
         return True
+    if signal_data.get('strength', 0) < params.high_win_min_strength:
+        return False
     if signal_data.get('close_position_score', 0) < params.high_win_min_close_position_score:
         return False
     if signal_data.get('volatility_contraction_score', 0) < params.high_win_min_volatility_contraction_score:
+        return False
+    if signal_data.get('sequence_confidence', 0.5) < params.high_win_min_sequence_confidence:
+        return False
+    if signal_data.get('factor_score', 0) < params.high_win_min_factor_score:
         return False
     if signal_data.get('rr_ratio', 0) < params.high_win_min_rr:
         return False
@@ -1910,8 +2153,14 @@ def find_n_signals(
                 'intraday_reversal_score': factor_data.get('intraday_reversal_score', 0),
                 'volume_climax_score': factor_data.get('volume_climax_score', 0),
                 'sector_relative_score': factor_data.get('sector_relative_score', 0),
+                'adx_trend_score': factor_data.get('adx_trend_score', 0),
+                'obv_accumulation_score': factor_data.get('obv_accumulation_score', 0),
+                'cmf_score': factor_data.get('cmf_score', 0),
+                'gap_support_score': factor_data.get('gap_support_score', 0),
                 'ml_confidence': factor_data.get('ml_confidence', 0.0),
                 'ml_confidence_score': factor_data.get('ml_confidence_score', 0),
+                'sequence_confidence': factor_data.get('sequence_confidence', 0.0),
+                'sequence_score': factor_data.get('sequence_score', 0),
                 'factor_score': factor_data.get('factor_score', 0),
                 'factor_details': factor_data.get('factor_details', {}),
             }
@@ -2079,8 +2328,14 @@ def find_n_signals(
                             'intraday_reversal_score': factor_data.get('intraday_reversal_score', 0),
                             'volume_climax_score': factor_data.get('volume_climax_score', 0),
                             'sector_relative_score': factor_data.get('sector_relative_score', 0),
+                            'adx_trend_score': factor_data.get('adx_trend_score', 0),
+                            'obv_accumulation_score': factor_data.get('obv_accumulation_score', 0),
+                            'cmf_score': factor_data.get('cmf_score', 0),
+                            'gap_support_score': factor_data.get('gap_support_score', 0),
                             'ml_confidence': factor_data.get('ml_confidence', 0.0),
                             'ml_confidence_score': factor_data.get('ml_confidence_score', 0),
+                            'sequence_confidence': factor_data.get('sequence_confidence', 0.0),
+                            'sequence_score': factor_data.get('sequence_score', 0),
                             'factor_score': factor_data.get('factor_score', 0),
                             'factor_details': factor_data.get('factor_details', {}),
                         }
@@ -2277,7 +2532,13 @@ def scan_stock(
             intraday_reversal_score=s.get('intraday_reversal_score', 0),
             volume_climax_score=s.get('volume_climax_score', 0),
             sector_relative_score=s.get('sector_relative_score', 0),
+            adx_trend_score=s.get('adx_trend_score', 0),
+            obv_accumulation_score=s.get('obv_accumulation_score', 0),
+            cmf_score=s.get('cmf_score', 0),
+            gap_support_score=s.get('gap_support_score', 0),
             ml_confidence=s.get('ml_confidence', 0.0),
+            sequence_confidence=s.get('sequence_confidence', 0.0),
+            sequence_score=s.get('sequence_score', 0),
             factor_score=s.get('factor_score', 0),
             details=s.get('factor_details', {}),
         )

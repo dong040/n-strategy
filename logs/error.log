@@ -281,3 +281,187 @@ TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
 2026-05-31 18:05:10,833 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
 2026-05-31 18:05:48,873 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
 2026-05-31 18:05:48,873 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:16:22,701 | dataflows            | WARNING  | interface:<module>:35 | ⚠️ 港股工具不可用: No module named 'yfinance'
+2026-06-01 21:16:22,702 | dataflows            | WARNING  | interface:<module>:179 | ⚠️ yfinance工具不可用: No module named 'yfinance'
+2026-06-01 21:16:22,702 | dataflows            | WARNING  | interface:<module>:186 | ⚠️ stockstats工具不可用: No module named 'yfinance'
+2026-06-01 21:16:22,702 | dataflows            | WARNING  | interface:<module>:202 | ⚠️ yfinance库不可用: No module named 'yfinance'
+2026-06-01 21:16:23,650 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:23,650 | default              | WARNING  | market_analyst:_get_company_name:44 | ⚠️ [市场分析师] 无法从统一接口解析股票名称: 603032，尝试降级方案
+2026-06-01 21:16:23,651 | default              | ERROR    | market_analyst:_get_company_name:53 | ❌ [市场分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:23,651 | default              | ERROR    | market_analyst:_get_company_name:55 | ❌ [市场分析师] 所有方案都无法获取股票名称: 603032
+2026-06-01 21:16:25,023 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:40,726 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:40,727 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 603032，尝试降级方案
+2026-06-01 21:16:40,727 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:40,727 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 603032
+2026-06-01 21:16:41,838 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:41,839 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 603032，尝试降级方案
+2026-06-01 21:16:41,839 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:41,839 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 603032
+2026-06-01 21:16:52,497 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:52,498 | analysts.news        | WARNING  | news_analyst:_get_company_name:56 | ⚠️ [DEBUG] 无法从统一接口解析股票名称: 603032
+2026-06-01 21:16:53,688 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:53,688 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 603032，尝试降级方案
+2026-06-01 21:16:53,688 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:53,688 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 603032
+2026-06-01 21:16:55,286 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:55,289 | agents               | WARNING  | db_cache:<module>:29 | ⚠️ pymongo 未安装，MongoDB功能不可用
+2026-06-01 21:16:55,289 | agents               | WARNING  | db_cache:<module>:38 | ⚠️ redis 未安装，Redis功能不可用
+2026-06-01 21:16:55,292 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:55,295 | agents               | ERROR    | optimized_china_data:_estimate_financial_metrics:841 | ❌ 无法获取股票 603032 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:16:55,295 | agents               | WARNING  | optimized_china_data:_generate_fundamentals_report:433 | ⚠️ [基本面分析] 无法获取财务指标: 无法获取股票 603032 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:16:55,295 | agents               | WARNING  | agent_utils:get_stock_fundamentals_unified:1020 | ⚠️ [统一基本面工具] 数据模块 1 包含错误信息
+2026-06-01 21:16:55,297 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:55,297 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 603032，尝试降级方案
+2026-06-01 21:16:55,297 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:16:55,297 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 603032
+2026-06-01 21:17:03,077 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:17:03,077 | default              | ERROR    | bull_researcher:_get_company_name:51 | ❌ [多头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:17:03,800 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:17:03,800 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:17:21,327 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:17:21,328 | default              | ERROR    | bear_researcher:_get_company_name:49 | ❌ [空头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:17:21,723 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:17:21,723 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:17:42,560 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:17:42,560 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:17:55,052 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-06-01 21:17:55,468 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:17:55,468 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:18:44,358 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:18:44,358 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:18:59,877 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:18:59,877 | default              | WARNING  | market_analyst:_get_company_name:44 | ⚠️ [市场分析师] 无法从统一接口解析股票名称: 600360，尝试降级方案
+2026-06-01 21:18:59,878 | default              | ERROR    | market_analyst:_get_company_name:53 | ❌ [市场分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:18:59,878 | default              | ERROR    | market_analyst:_get_company_name:55 | ❌ [市场分析师] 所有方案都无法获取股票名称: 600360
+2026-06-01 21:19:01,289 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:14,643 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:14,643 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 600360，尝试降级方案
+2026-06-01 21:19:14,643 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:14,643 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 600360
+2026-06-01 21:19:15,872 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:15,872 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 600360，尝试降级方案
+2026-06-01 21:19:15,872 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:15,872 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 600360
+2026-06-01 21:19:31,464 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:31,464 | analysts.news        | WARNING  | news_analyst:_get_company_name:56 | ⚠️ [DEBUG] 无法从统一接口解析股票名称: 600360
+2026-06-01 21:19:32,871 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:32,871 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 600360，尝试降级方案
+2026-06-01 21:19:32,872 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:32,872 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 600360
+2026-06-01 21:19:34,977 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:34,977 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:34,977 | agents               | ERROR    | optimized_china_data:_estimate_financial_metrics:841 | ❌ 无法获取股票 600360 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:19:34,977 | agents               | WARNING  | optimized_china_data:_generate_fundamentals_report:433 | ⚠️ [基本面分析] 无法获取财务指标: 无法获取股票 600360 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:19:34,978 | agents               | WARNING  | agent_utils:get_stock_fundamentals_unified:1020 | ⚠️ [统一基本面工具] 数据模块 1 包含错误信息
+2026-06-01 21:19:34,980 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:34,980 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 600360，尝试降级方案
+2026-06-01 21:19:34,980 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:34,980 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 600360
+2026-06-01 21:19:43,464 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:43,464 | default              | ERROR    | bull_researcher:_get_company_name:51 | ❌ [多头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:43,569 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:19:43,569 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:19:59,486 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:59,486 | default              | ERROR    | bear_researcher:_get_company_name:49 | ❌ [空头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:19:59,752 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:19:59,752 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:20:17,517 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:20:17,518 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:20:31,002 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-06-01 21:20:31,370 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:20:31,370 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:21:21,939 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:21:21,940 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:21:38,727 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:38,727 | default              | WARNING  | market_analyst:_get_company_name:44 | ⚠️ [市场分析师] 无法从统一接口解析股票名称: 603158，尝试降级方案
+2026-06-01 21:21:38,728 | default              | ERROR    | market_analyst:_get_company_name:53 | ❌ [市场分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:38,728 | default              | ERROR    | market_analyst:_get_company_name:55 | ❌ [市场分析师] 所有方案都无法获取股票名称: 603158
+2026-06-01 21:21:39,936 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:49,784 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:49,784 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 603158，尝试降级方案
+2026-06-01 21:21:49,784 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:49,784 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 603158
+2026-06-01 21:21:50,923 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:50,923 | analysts.social_media | WARNING  | social_media_analyst:_get_company_name_for_social_media:41 | ⚠️ [社交媒体分析师] 无法从统一接口解析股票名称: 603158，尝试降级方案
+2026-06-01 21:21:50,923 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:50 | ❌ [社交媒体分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:21:50,923 | analysts.social_media | ERROR    | social_media_analyst:_get_company_name_for_social_media:52 | ❌ [社交媒体分析师] 所有方案都无法获取股票名称: 603158
+2026-06-01 21:22:06,650 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:06,650 | analysts.news        | WARNING  | news_analyst:_get_company_name:56 | ⚠️ [DEBUG] 无法从统一接口解析股票名称: 603158
+2026-06-01 21:22:08,999 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:09,000 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 603158，尝试降级方案
+2026-06-01 21:22:09,000 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:09,000 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 603158
+2026-06-01 21:22:10,862 | dataflows            | ERROR    | interface:get_china_stock_data_unified:1617 | ❌ [统一接口] 获取股票数据失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+Traceback (most recent call last):
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/interface.py", line 1579, in get_china_stock_data_unified
+    from .data_source_manager import get_china_stock_data_unified
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 57, in <module>
+    class DataSourceManager:
+  File "/Users/moneisur/TradingAgents-CN/tradingagents/dataflows/data_source_manager.py", line 1143, in DataSourceManager
+    def _get_mongodb_data(self, symbol: str, start_date: str, end_date: str, period: str = "daily") -> tuple[str, str | None]:
+TypeError: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:10,864 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:10,864 | agents               | ERROR    | optimized_china_data:_estimate_financial_metrics:841 | ❌ 无法获取股票 603158 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:22:10,864 | agents               | WARNING  | optimized_china_data:_generate_fundamentals_report:433 | ⚠️ [基本面分析] 无法获取财务指标: 无法获取股票 603158 的财务数据。已尝试所有数据源（MongoDB、AKShare、Tushare）均失败。
+2026-06-01 21:22:10,865 | agents               | WARNING  | agent_utils:get_stock_fundamentals_unified:1020 | ⚠️ [统一基本面工具] 数据模块 1 包含错误信息
+2026-06-01 21:22:10,866 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:10,866 | default              | WARNING  | fundamentals_analyst:_get_company_name_for_fundamentals:48 | ⚠️ [基本面分析师] 无法从统一接口解析股票名称: 603158，尝试降级方案
+2026-06-01 21:22:10,866 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:57 | ❌ [基本面分析师] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:10,866 | default              | ERROR    | fundamentals_analyst:_get_company_name_for_fundamentals:59 | ❌ [基本面分析师] 所有方案都无法获取股票名称: 603158
+2026-06-01 21:22:12,360 | default              | WARNING  | fundamentals_analyst:fundamentals_analyst_node:454 | ⚠️ [强制生成报告] 工具已返回数据，但LLM仍尝试调用工具，强制基于现有数据生成报告
+2026-06-01 21:22:13,442 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:13,443 | default              | ERROR    | bull_researcher:_get_company_name:51 | ❌ [多头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:13,537 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:22:13,537 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:22:36,000 | dataflows            | ERROR    | interface:get_china_stock_info_unified:1678 | ❌ [统一接口] 获取股票信息失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:36,001 | default              | ERROR    | bear_researcher:_get_company_name:49 | ❌ [空头研究员] 降级方案也失败: unsupported operand type(s) for |: 'type' and 'NoneType'
+2026-06-01 21:22:36,212 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:22:36,212 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:22:57,159 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:22:57,159 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:23:12,564 | default              | WARNING  | trader:trader_node:43 | ⚠️ [DEBUG] memory可用，获取历史记忆
+2026-06-01 21:23:12,750 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:23:12,751 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量
+2026-06-01 21:24:03,598 | agents.utils.memory  | ERROR    | memory:get_embedding:540 | ❌ deepseek embedding异常: Error code: 404
+2026-06-01 21:24:03,598 | agents.utils.memory  | WARNING  | memory:get_embedding:542 | ⚠️ 记忆功能降级，返回空向量

@@ -46,6 +46,10 @@ FACTOR_KEYS = [
     "intraday_reversal_score",
     "volume_climax_score",
     "sector_relative_score",
+    "adx_trend_score",
+    "obv_accumulation_score",
+    "cmf_score",
+    "gap_support_score",
 ]
 
 _MODEL_CACHE: dict[str, Any] | None = None

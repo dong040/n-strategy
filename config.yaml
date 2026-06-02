@@ -55,19 +55,33 @@ n_pattern:
   min_turnover_wan: 5000        # 最小日成交额(万)
   enable_trading_factors: true  # 启用交易行为因子评分
   high_win_mode: true           # 高胜率模式：收盘强 + 波动缩 + 压力空间过滤
-  high_win_min_close_position_score: 5
+  high_win_min_strength: 85
+  high_win_min_close_position_score: 0
   high_win_min_volatility_contraction_score: 5
+  high_win_min_sequence_confidence: 0.48
+  high_win_min_factor_score: 0
   high_win_min_resistance_pct: 3.0
   high_win_min_rr: 1.5
+  high_win_min_ml_confidence: 0.45
 
 # --- 扫描配置 ---
 screener:
-  top_n: 3                      # 每日输出前 N 只 (受 max_positions 约束)
+  top_n: 3                      # 兼容旧配置，等价于 watchlist_top_n
+  execution_top_n: 3            # 执行层：严格高胜率候选上限
+  watchlist_top_n: 3            # 观察层：每天给你筛选的候选数
+  watchlist_min_ml_confidence: 0.45
+  watchlist_min_sequence_confidence: 0.47
+  watchlist_min_rr: 1.2
+  watchlist_min_strength: 80
+  watchlist_min_factor_score: 0
+  watchlist_min_close_position_score: -10
+  watchlist_min_volatility_contraction_score: 5
   markets: ["sh", "sz"]          # 扫描市场：仅主板（60xxxx上海主板 + 000xxx/001xxx深圳主板）
   exclude_st: true              # 排除 ST
   exclude_suspend: true         # 排除停牌
   main_board_only: true         # 仅主板（60xxxx + 000xxx/001xxx），排除创业板/科创板/北交所
   industry_filter: []           # 限定行业（空=全市场），如 ["半导体","机器人"]
+  enable_tradingagents: false   # 默认关闭，避免日扫描被多智能体长耗时分析拖住
 
 # --- 回测配置 ---
 backtest:
@@ -77,7 +91,7 @@ backtest:
   init_cash: 1000000            # 初始资金（元）
   max_position_pct: 0.2         # 单票最大仓位 20%
   max_positions: 3              # 最大同时持仓数
-  lookback_years: 3             # 回测年数
+  lookback_years: 1             # 回测基准年数：默认按最近1年全市场K线做统一评估
 
 # --- 优化器配置 ---
 optimizer:
