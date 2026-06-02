@@ -1,1 +1,35 @@
-@/var/folders/ps/vjbc6h4s5hqd164w3lb62grh0000gn/T/nstrategy-docs-LLXfYU/.gitignore
+# 敏感配置
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+
+# 本地数据
+data/*.db
+data/*.pkl
+data/*.csv
+data/backtest_results_*.json
+data/bt_cache/
+data/screenshots/
+
+# 日志与评估产物
+logs/
+eval_results/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# 临时文件
+tmp/
+*.tmp
